@@ -1,0 +1,65 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# Inspiration  
+We’ve always been fascinated by **steganography**—hiding secrets inside files—and by the rise of **voice agents**. That got us thinking: could we use the human voice as a natural, almost invisible key to lock down e-commerce checkouts?  
+
+E-commerce merchants lose billions to fraud every year. In 2023, global online payment fraud losses were over **$48 billion**, with account takeover fraud alone hitting **$11.4 billion**.  
+
+We wanted to create a **lock that feels frictionless to real people but impossible for fraudsters**.  
+
+Fun fact: we named this project after our favorite bar and grill in San Francisco, **Balboa Cafe**. It’s where I first met my teammate, and we just reunited at HackHarvard — hence the domain name **balboa.vodka**.  
+
+---
+
+# What it does  
+Balboa is a **voice-based cognitive lock** for online checkout.  
+- When a transaction looks risky, instead of clunky 2FA, the shopper just speaks a secret phrase.  
+- Balboa verifies three things:  
+  1. The **secret phrase** matches.  
+  2. The **voice embedding similarity** holds true.  
+  3. *(Optional)* A **cryptographic audio fingerprint** matches the original wav file.  
+
+To the customer, it’s quick and natural. To bots and fraud rings, it’s a brick wall.  
+
+---
+
+# How we built it  
+We stitched together tools we love:  
+- **Gemini API** to guide users through onboarding and capture “voice secrets.”  
+- **ElevenLabs** for natural voice interactions.  
+- A custom **cryptographic audio fingerprint**, borrowing ideas from steganography.  
+
+We integrated Balboa into a **Medusa.js / Vercel demo store**, where it only triggers if the fraud model flags a checkout as high risk.  
+
+---
+
+# Challenges we ran into  
+- Balancing **security vs. friction**.  
+- Making **voice embeddings** fast and accurate enough for checkout.  
+- Prototyping **client-side audio fingerprinting** without heavy libraries.  
+
+---
+
+# Accomplishments that we're proud of  
+- A working demo checkout where Balboa kicks in only on high-risk flows.  
+- Real-time integration of **voice secrets + embeddings**.  
+- A security layer that feels **invisible** to real customers.  
+
+---
+
+# What we learned  
+- Voice biometrics actually work in checkout flows if you pair them with fraud scoring.  
+- People are more willing to engage with security if it feels **natural**.  
+- Cryptographic fingerprints can outperform traditional browser fingerprinting.  
+
+---
+
+# What's next for Balboa  
+- **Deeper OEM cryptographic fingerprinting** — partnering with device makers to embed tamper-resistant, device-backed anchors.  
+- Expansion to more e-commerce platforms.  
+- Exploring **continuous authentication** beyond checkout.  
+- Optimizing latency until Balboa feels instant.  
