@@ -6,7 +6,7 @@ export default defineConfig({
 	dts: true,
 	sourcemap: true,
 	clean: true,
-	external: ["react", "react-dom", "@vapi-ai/web-sdk"],
+	external: ["react", "react-dom"],
 	treeshake: true,
 	minify: false,
 	splitting: false,

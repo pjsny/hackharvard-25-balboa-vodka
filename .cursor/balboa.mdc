@@ -30,7 +30,7 @@ To the customer, it’s quick and natural. To bots and fraud rings, it’s a bri
 # How we built it
 We stitched together tools we love:
 - **Gemini API** to guide users through onboarding and capture “voice secrets.”
-- **ElevenLabs** for natural voice interactions.
+- **Voice services** for natural voice interactions.
 - A custom **cryptographic audio fingerprint**, borrowing ideas from steganography.
 
 We integrated Balboa into a **Medusa.js / Vercel demo store**, where it only triggers if the fraud model flags a checkout as high risk.

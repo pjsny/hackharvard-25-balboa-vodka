@@ -21,7 +21,7 @@ This component (or set of components) is necessary to package Balboa's integrati
 • Integration Requirement: The SDK must handle the client-side acquisition of the shopper's spoken phrase and the secure transmission of the audio data to the backend server (Component 1) for real-time verification.
 • Technology Inclusion: The SDK would need to incorporate the specific proprietary technologies Balboa utilizes:
     ◦ Integration points for utilizing the Gemini API for working with voice secrets and embeddings.
-    ◦ Integration with ElevenLabs for providing natural voice interactions to the shopper.
+    ◦ Integration with voice services for providing natural voice interactions to the shopper.
     ◦ The client-side portion of the custom cryptographic audio fingerprint logic, which borrows ideas from steganography. The team prototyped client-side audio fingerprinting without heavy libraries.
 • Future Expansion: Developing a robust SDK supports the future goal of expansion to more e-commerce platforms.
 4. DEMO Site: Example E-commerce Checkout

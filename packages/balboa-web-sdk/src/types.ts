@@ -1,9 +1,9 @@
 /**
- * Configuration options for the Balboa SDK
+ * Configuration options for the Balboa Web SDK
  */
 export interface BalboaConfig {
-	/** API key for authenticating with Balboa services */
-	apiKey: string;
+	/** API key for authenticating with Balboa services (optional for development) */
+	apiKey?: string;
 	/** Base URL for the Balboa API */
 	baseUrl: string;
 	/** Environment (sandbox or production) */
@@ -18,12 +18,8 @@ export interface BalboaConfig {
  * Options for voice verification
  */
 export interface VerificationOptions {
-	/** Unique identifier for the transaction */
-	transactionId: string;
-	/** Customer and checkout data */
-	customerData: Record<string, unknown>;
-	/** Pre-calculated fraud risk score (0-100) */
-	riskLevel?: number;
+	/** Customer's email address for verification */
+	email: string;
 	/** Custom timeout in milliseconds */
 	timeout?: number;
 	/** Number of retry attempts */
@@ -76,9 +72,9 @@ export interface VerificationDetails {
 }
 
 /**
- * VAPI call result data
+ * Voice call result data
  */
-export interface VapiCallResult {
+export interface VoiceCallResult {
 	/** Unique call ID */
 	callId: string;
 	/** Audio recording URL or data */
@@ -106,20 +102,6 @@ export interface VerificationSession {
 }
 
 /**
- * Balboa SDK error class
- */
-export class BalboaError extends Error {
-	constructor(
-		message: string,
-		public code?: string,
-		public originalError?: Error,
-	) {
-		super(message);
-		this.name = "BalboaError";
-	}
-}
-
-/**
  * React hook return type
  */
 export interface UseBalboaReturn {
@@ -133,4 +115,30 @@ export interface UseBalboaReturn {
 	result: VerificationResult | null;
 	/** Last error */
 	error: Error | null;
+}
+
+/**
+ * Web verification hook return type
+ */
+export interface UseBalboaVerificationReturn {
+	/** Start verification process */
+	startVerification: (options: VerificationOptions) => void;
+	/** Whether verification is in progress */
+	isLoading: boolean;
+	/** Last verification result */
+	result: VerificationResult | null;
+	/** Last error */
+	error: Error | null;
+	/** Whether dialog is open */
+	isOpen: boolean;
+	/** Current verification options */
+	currentOptions: VerificationOptions | null;
+	/** Handle successful verification */
+	handleSuccess: () => void;
+	/** Handle dialog close */
+	handleClose: () => void;
+	/** Direct verification function */
+	verifyWithBalboa: (
+		options: VerificationOptions,
+	) => Promise<VerificationResult>;
 }

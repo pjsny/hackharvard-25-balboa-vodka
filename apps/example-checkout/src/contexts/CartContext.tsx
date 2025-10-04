@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useReducer } from "react";
+import { mockProducts } from "@/data/products";
 import type { Cart, CartItem, Product } from "@/types";
 
 interface CartContextType {
@@ -14,6 +15,24 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Prepopulate cart with 2 items
+const getPrepopulatedCart = (): Cart => {
+	const product1 = mockProducts[0]; // Harvard Crimson Sweatshirt
+	const product2 = mockProducts[1]; // Boston Red Sox Cap
+
+	const items: CartItem[] = [
+		{ product: product1, quantity: 1 },
+		{ product: product2, quantity: 1 },
+	];
+
+	const total = items.reduce(
+		(sum, item) => sum + item.product.price * item.quantity,
+		0,
+	);
+
+	return { items, total };
+};
+
 type CartAction =
 	| { type: "ADD_TO_CART"; payload: { product: Product; quantity: number } }
 	| { type: "REMOVE_FROM_CART"; payload: { productId: string } }
@@ -21,7 +40,8 @@ type CartAction =
 			type: "UPDATE_QUANTITY";
 			payload: { productId: string; quantity: number };
 	  }
-	| { type: "CLEAR_CART" };
+	| { type: "CLEAR_CART" }
+	| { type: "REPOPULATE_CART" };
 
 const cartReducer = (state: Cart, action: CartAction): Cart => {
 	console.log("CartReducer: Received action", action, "Current state", state);
@@ -94,13 +114,16 @@ const cartReducer = (state: Cart, action: CartAction): Cart => {
 		case "CLEAR_CART":
 			return { items: [], total: 0 };
 
+		case "REPOPULATE_CART":
+			return getPrepopulatedCart();
+
 		default:
 			return state;
 	}
 };
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-	const [cart, dispatch] = useReducer(cartReducer, { items: [], total: 0 });
+	const [cart, dispatch] = useReducer(cartReducer, getPrepopulatedCart());
 
 	const addToCart = (product: Product, quantity: number = 1) => {
 		console.log("CartContext: Adding to cart", { product, quantity });
@@ -116,7 +139,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 	};
 
 	const clearCart = () => {
-		dispatch({ type: "CLEAR_CART" });
+		// Instead of clearing, repopulate with the default 2 items
+		dispatch({ type: "REPOPULATE_CART" });
 	};
 
 	return (

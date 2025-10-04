@@ -1,8 +1,8 @@
 "use client";
 
+import { VoiceVerificationDialog } from "@balboa/web";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -12,29 +12,31 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
-import type { CheckoutData, FraudRisk, CartItem } from "@/types";
+import type { CartItem, CheckoutData } from "@/types";
 
 export default function Checkout() {
 	const router = useRouter();
 	const { cart, clearCart } = useCart();
-	const [step, setStep] = useState<
-		"form" | "risk-assessment" | "balboa-verification" | "success"
-	>("form");
+	const [step, setStep] = useState<"form" | "success">("form");
 	const [checkoutData, setCheckoutData] = useState<CheckoutData>({
-		email: "",
-		firstName: "",
-		lastName: "",
-		address: "",
-		city: "",
-		state: "",
-		zipCode: "",
-		cardNumber: "",
-		expiryDate: "",
-		cvv: "",
+		email: "user@example.com",
+		firstName: "John",
+		lastName: "Doe",
+		address: "123 Main St",
+		city: "Cambridge",
+		state: "MA",
+		zipCode: "02138",
+		cardNumber: "4242424242424242",
+		expiryDate: "12/25",
+		cvv: "123",
 	});
-	const [fraudRisk, setFraudRisk] = useState<FraudRisk | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [showVoiceVerification, setShowVoiceVerification] = useState(false);
+	const [verificationSessionId, setVerificationSessionId] = useState<
+		string | null
+	>(null);
 	const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
+	const [error, setError] = useState<string | null>(null);
 
 	// Redirect if cart is empty (but not if we're in success state)
 	useEffect(() => {
@@ -43,58 +45,72 @@ export default function Checkout() {
 		}
 	}, [cart.items.length, router, step]);
 
-	const simulateFraudAssessment = (): FraudRisk => {
-		// Simulate fraud detection based on various factors
-		const riskFactors = [
-			checkoutData.cardNumber.includes("1111"), // Suspicious card pattern
-			checkoutData.email.includes("test"), // Test email
-			cart.total > 500, // High value transaction
-			checkoutData.zipCode === "12345", // Suspicious zip
-		];
-
-		const riskScore = riskFactors.filter(Boolean).length;
-		const isHighRisk = riskScore >= 2;
-
-		return {
-			isHighRisk,
-			riskScore: riskScore * 25, // Convert to percentage
-			reason: isHighRisk
-				? "Multiple risk factors detected"
-				: "Low risk transaction",
-		};
-	};
-
-	const handleFormSubmit = (e: React.FormEvent) => {
+	const handleFormSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsProcessing(true);
+		setError(null);
 
-		// Simulate API call delay
-		setTimeout(() => {
-			const risk = simulateFraudAssessment();
-			setFraudRisk(risk);
+		try {
+			// Create verification session first
+			const verifyResponse = await fetch("/api/verify", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email: checkoutData.email }),
+			});
 
-			if (risk.isHighRisk) {
-				setStep("balboa-verification");
+			const verifyData = await verifyResponse.json();
+
+			if (verifyData.id) {
+				setVerificationSessionId(verifyData.id);
+				setShowVoiceVerification(true);
 			} else {
+				setError("Failed to create verification session");
+			}
+		} catch (err) {
+			setError("An unexpected error occurred");
+			console.error("Checkout initiation error:", err);
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	const handleVoiceVerificationSuccess = async () => {
+		setIsProcessing(true);
+		setError(null);
+
+		try {
+			// Place the order
+			const response = await fetch("/api/place-order", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: checkoutData.email,
+					cartItems: cart.items,
+					verificationSessionId,
+				}),
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
 				setPurchasedItems([...cart.items]);
 				setStep("success");
 				clearCart();
+				setShowVoiceVerification(false);
+				console.log(`Order placed! Order ID: ${result.orderId}`);
+			} else {
+				setError(result.error || "Failed to place order");
 			}
-
+		} catch (err) {
+			setError("An unexpected error occurred");
+			console.error("Place order error:", err);
+		} finally {
 			setIsProcessing(false);
-		}, 2000);
+		}
 	};
 
-	const handleBalboaVerification = () => {
-		setIsProcessing(true);
-
-		// Simulate Balboa verification process
-		setTimeout(() => {
-			setPurchasedItems([...cart.items]);
-			setStep("success");
-			clearCart();
-			setIsProcessing(false);
-		}, 3000);
+	const handleVoiceVerificationClose = () => {
+		setShowVoiceVerification(false);
 	};
 
 	const handleInputChange = (field: keyof CheckoutData, value: string) => {
@@ -110,7 +126,8 @@ export default function Checkout() {
 			<div className="mb-6">
 				<h1 className="text-3xl font-bold mb-2">Harvard Crimson Checkout</h1>
 				<p className="text-muted-foreground">
-					Complete your secure purchase of Harvard merchandise with Balboa verification
+					Complete your secure purchase of Harvard merchandise with Balboa
+					verification
 				</p>
 			</div>
 
@@ -126,6 +143,11 @@ export default function Checkout() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
+								{error && (
+									<div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+										<p className="text-red-800 text-sm">{error}</p>
+									</div>
+								)}
 								<form onSubmit={handleFormSubmit} className="space-y-6">
 									{/* Personal Information */}
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -338,64 +360,6 @@ export default function Checkout() {
 						</Card>
 					)}
 
-					{/* Balboa Verification */}
-					{step === "balboa-verification" && (
-						<Card>
-							<CardHeader>
-								<CardTitle className="flex items-center gap-2">
-									<span className="text-2xl">🎤</span>
-									Balboa Voice Verification Required
-								</CardTitle>
-								<CardDescription>
-									High-risk transaction detected. Please complete voice
-									verification to proceed.
-								</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-6">
-								<div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-									<h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-										Risk Assessment Results
-									</h3>
-									<p className="text-sm text-yellow-700 dark:text-yellow-300">
-										Risk Score: {fraudRisk?.riskScore}% - {fraudRisk?.reason}
-									</p>
-								</div>
-
-								<div className="text-center space-y-4">
-									<div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-										<span className="text-2xl">🎤</span>
-									</div>
-									<h3 className="text-xl font-semibold">Voice Verification</h3>
-									<p className="text-muted-foreground">
-										Please speak the secret phrase:{" "}
-										<strong>"Balboa verification complete"</strong>
-									</p>
-									<p className="text-sm text-muted-foreground">
-										Our system will verify your voice matches the enrollment
-										data and check the audio fingerprint.
-									</p>
-								</div>
-
-								<div className="space-y-4">
-									<Button
-										onClick={handleBalboaVerification}
-										className="w-full"
-										size="lg"
-										disabled={isProcessing}
-									>
-										{isProcessing ? "Verifying..." : "Start Voice Verification"}
-									</Button>
-
-									<div className="text-xs text-muted-foreground text-center">
-										<p>✓ Secret phrase verification</p>
-										<p>✓ Voice embedding similarity check</p>
-										<p>✓ Audio fingerprint validation</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					)}
-
 					{/* Success */}
 					{step === "success" && (
 						<Card>
@@ -403,10 +367,12 @@ export default function Checkout() {
 								<div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8">
 									<span className="text-4xl">✅</span>
 								</div>
-								<h2 className="text-4xl font-bold mb-6 text-primary">Thanks for shopping with us!</h2>
+								<h2 className="text-4xl font-bold mb-6 text-primary">
+									Thanks for shopping with us!
+								</h2>
 								<p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto">
-									Your Harvard merchandise order has been processed successfully. 
-									You will receive a confirmation email shortly.
+									Your Harvard merchandise order has been processed
+									successfully. You will receive a confirmation email shortly.
 								</p>
 								<Button asChild size="lg">
 									<a href="/">Continue Shopping</a>
@@ -465,6 +431,14 @@ export default function Checkout() {
 					</Card>
 				</div>
 			</div>
+
+			{/* Voice Verification Dialog */}
+			<VoiceVerificationDialog
+				isOpen={showVoiceVerification}
+				onClose={handleVoiceVerificationClose}
+				onSuccess={handleVoiceVerificationSuccess}
+				email={checkoutData.email}
+			/>
 		</div>
 	);
 }

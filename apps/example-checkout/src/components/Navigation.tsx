@@ -7,7 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 
 export function Navigation() {
 	const { cart } = useCart();
-	
+
 	// Debug cart state
 	console.log("Navigation: Cart state", cart);
 

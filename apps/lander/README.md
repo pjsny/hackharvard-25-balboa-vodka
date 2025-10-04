@@ -1,12 +1,24 @@
 ## Getting Started
 
+### Environment Setup
+
+Before running the application, you can optionally set up environment variables:
+
+1. **Set Environment Variables (Optional):**
+   Create a `.env.local` file in the `apps/lander` directory:
+   ```bash
+   # Add any required environment variables here
+   ```
+
+### Running the Application
+
 First, run the development server:
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
