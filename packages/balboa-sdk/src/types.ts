@@ -1,0 +1,136 @@
+/**
+ * Configuration options for the Balboa SDK
+ */
+export interface BalboaConfig {
+	/** API key for authenticating with Balboa services */
+	apiKey: string;
+	/** Base URL for the Balboa API */
+	baseUrl: string;
+	/** Environment (sandbox or production) */
+	environment?: "sandbox" | "production";
+	/** Request timeout in milliseconds */
+	timeout?: number;
+	/** Number of retry attempts */
+	retries?: number;
+}
+
+/**
+ * Options for voice verification
+ */
+export interface VerificationOptions {
+	/** Unique identifier for the transaction */
+	transactionId: string;
+	/** Customer and checkout data */
+	customerData: Record<string, unknown>;
+	/** Pre-calculated fraud risk score (0-100) */
+	riskLevel?: number;
+	/** Custom timeout in milliseconds */
+	timeout?: number;
+	/** Number of retry attempts */
+	retries?: number;
+	/** Progress callback for status updates */
+	onProgress?: (status: VerificationStatus) => void;
+}
+
+/**
+ * Verification status types
+ */
+export type VerificationStatus =
+	| "idle"
+	| "starting"
+	| "calling"
+	| "processing"
+	| "completed"
+	| "failed";
+
+/**
+ * Result of voice verification
+ */
+export interface VerificationResult {
+	/** Whether the verification process completed successfully */
+	success: boolean;
+	/** Whether the user's voice was verified */
+	verified: boolean;
+	/** Confidence score from 0.0 to 1.0 */
+	confidence: number;
+	/** Unique session ID for the verification */
+	sessionId: string;
+	/** Additional verification details */
+	details?: VerificationDetails;
+}
+
+/**
+ * Detailed verification information
+ */
+export interface VerificationDetails {
+	/** Accuracy of the spoken phrase */
+	phraseAccuracy?: number;
+	/** Voice biometric match score */
+	voiceMatch?: number;
+	/** Whether audio fingerprint was valid */
+	fingerprintValid?: boolean;
+	/** Processing time in milliseconds */
+	processingTime?: number;
+	/** Reason for verification result */
+	reason?: string;
+}
+
+/**
+ * VAPI call result data
+ */
+export interface VapiCallResult {
+	/** Unique call ID */
+	callId: string;
+	/** Audio recording URL or data */
+	recording: string;
+	/** Transcribed text */
+	transcript: string;
+	/** Call summary */
+	summary?: string;
+	/** Call duration in seconds */
+	duration?: number;
+}
+
+/**
+ * Backend API response for verification session
+ */
+export interface VerificationSession {
+	/** Session ID */
+	id: string;
+	/** Current status */
+	status: "pending" | "completed" | "failed";
+	/** Verification result */
+	result?: VerificationResult;
+	/** Error message if failed */
+	error?: string;
+}
+
+/**
+ * Balboa SDK error class
+ */
+export class BalboaError extends Error {
+	constructor(
+		message: string,
+		public code?: string,
+		public originalError?: Error,
+	) {
+		super(message);
+		this.name = "BalboaError";
+	}
+}
+
+/**
+ * React hook return type
+ */
+export interface UseBalboaReturn {
+	/** Main verification function */
+	verifyWithBalboa: (
+		options: VerificationOptions,
+	) => Promise<VerificationResult>;
+	/** Whether verification is in progress */
+	isLoading: boolean;
+	/** Last verification result */
+	result: VerificationResult | null;
+	/** Last error */
+	error: Error | null;
+}
