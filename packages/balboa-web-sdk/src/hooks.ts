@@ -7,7 +7,7 @@ import type {
 	VerificationResult,
 	VerificationStatus,
 } from "./types";
-import { BalboaError } from "./types";
+import { BalboaError } from "./errors";
 export { useElevenLabsVerification } from "./elevenlabs-hook";
 
 /**

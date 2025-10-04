@@ -144,3 +144,19 @@ export interface UseBalboaVerificationReturn {
 		options: VerificationOptions,
 	) => Promise<VerificationResult>;
 }
+
+/**
+ * Result of ElevenLabs voice call
+ */
+export interface ElevenLabsCallResult {
+	/** Unique call/conversation ID */
+	callId: string;
+	/** Audio recording data (base64 or URL) */
+	recording: string;
+	/** Transcript of the conversation */
+	transcript: string;
+	/** Summary of the conversation */
+	summary: string;
+	/** Duration of the call in seconds */
+	duration: number;
+}

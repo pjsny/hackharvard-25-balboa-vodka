@@ -1,18 +1,35 @@
-import { BalboaError } from "./types";
-
 /**
- * Error codes for different failure scenarios
+ * Error codes for different types of Balboa errors
  */
 export const ERROR_CODES = {
+	NETWORK_ERROR: "NETWORK_ERROR",
+	VALIDATION_ERROR: "VALIDATION_ERROR",
+	TIMEOUT_ERROR: "TIMEOUT_ERROR",
+	VOICE_ERROR: "VOICE_ERROR",
+	SESSION_ERROR: "SESSION_ERROR",
+	UNKNOWN_ERROR: "UNKNOWN_ERROR",
 	MICROPHONE_DENIED: "MICROPHONE_DENIED",
 	VERIFICATION_FAILED: "VERIFICATION_FAILED",
 	TIMEOUT: "TIMEOUT",
 	API_ERROR: "API_ERROR",
-	NETWORK_ERROR: "NETWORK_ERROR",
 	INVALID_CONFIG: "INVALID_CONFIG",
 	SESSION_NOT_FOUND: "SESSION_NOT_FOUND",
 	ELEVENLABS_ERROR: "ELEVENLABS_ERROR",
 } as const;
+
+/**
+ * Custom error class for Balboa SDK errors
+ */
+export class BalboaError extends Error {
+	constructor(
+		message: string,
+		public code?: string,
+		public originalError?: Error,
+	) {
+		super(message);
+		this.name = "BalboaError";
+	}
+}
 
 /**
  * Creates a BalboaError with appropriate error code
@@ -61,29 +78,3 @@ export const RETRY_CONFIG = {
 	[ERROR_CODES.VERIFICATION_FAILED]: { maxRetries: 0, baseDelay: 0 },
 	[ERROR_CODES.MICROPHONE_DENIED]: { maxRetries: 0, baseDelay: 0 },
 } as const;
-
-/**
- * Error codes for different types of Balboa errors
- */
-export const ERROR_CODES = {
-	NETWORK_ERROR: "NETWORK_ERROR",
-	VALIDATION_ERROR: "VALIDATION_ERROR",
-	TIMEOUT_ERROR: "TIMEOUT_ERROR",
-	VOICE_ERROR: "VOICE_ERROR",
-	SESSION_ERROR: "SESSION_ERROR",
-	UNKNOWN_ERROR: "UNKNOWN_ERROR",
-} as const;
-
-/**
- * Custom error class for Balboa SDK errors
- */
-export class BalboaError extends Error {
-	constructor(
-		message: string,
-		public code?: string,
-		public originalError?: Error,
-	) {
-		super(message);
-		this.name = "BalboaError";
-	}
-}
