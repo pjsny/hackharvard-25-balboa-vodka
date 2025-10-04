@@ -1,8 +1,5 @@
-"use client";
-
 import { useCallback, useState } from "react";
-import { BalboaWebClient } from "./client";
-import { BalboaError } from "./errors";
+import { BalboaClient } from "./client";
 import type {
 	BalboaConfig,
 	UseBalboaReturn,
@@ -10,10 +7,11 @@ import type {
 	VerificationResult,
 	VerificationStatus,
 } from "./types";
+import { BalboaError } from "./types";
+export { useElevenLabsVerification } from "./elevenlabs-hook";
 
 /**
  * React hook for Balboa voice verification
- * Simplified hook that just handles session creation and status polling
  */
 export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 	const [state, setState] = useState<{
@@ -33,18 +31,22 @@ export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 			try {
 				// Create client with config or use default
 				const clientConfig = config || {
-					baseUrl: "http://localhost:3000",
+					apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY || "",
+					baseUrl: process.env.NEXT_PUBLIC_BALBOA_API_URL || "",
 					environment: "production",
 				};
 
-				const client = new BalboaWebClient(clientConfig);
+				const client = new BalboaClient(clientConfig);
 
-				// Create verification session
-				const session = await client.createVerificationSession(options);
-				setState((prev) => ({ ...prev, status: "calling" }));
+				// Add progress callback
+				const optionsWithProgress = {
+					...options,
+					onProgress: (status: VerificationStatus) => {
+						setState((prev) => ({ ...prev, status }));
+					},
+				};
 
-				// Poll for verification status
-				const result = await pollForStatus(client, session.id);
+				const result = await client.verifyWithBalboa(optionsWithProgress);
 
 				setState({ status: "completed", result, error: null });
 				return result;
@@ -77,57 +79,6 @@ export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 }
 
 /**
- * Poll for verification status with exponential backoff
- */
-async function pollForStatus(
-	client: BalboaWebClient,
-	sessionId: string,
-): Promise<VerificationResult> {
-	const maxAttempts = 10;
-	const baseDelay = 1000; // 1 second
-	const maxDelay = 10000; // 10 seconds
-
-	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-		try {
-			const result = await client.getVerificationStatus(sessionId);
-
-			if (result.success && result.verified !== null) {
-				return result;
-			}
-
-			// Calculate delay with exponential backoff
-			const delay = Math.min(baseDelay * 2 ** (attempt - 1), maxDelay);
-			console.log(
-				`⏳ Attempt ${attempt}/${maxAttempts} - waiting ${delay}ms before next poll`,
-			);
-
-			await sleep(delay);
-		} catch (error) {
-			console.error(`❌ Poll attempt ${attempt} failed:`, error);
-
-			if (attempt === maxAttempts) {
-				throw new BalboaError(
-					`Verification polling failed after ${maxAttempts} attempts`,
-				);
-			}
-
-			// Wait before retrying
-			const delay = Math.min(baseDelay * 2 ** (attempt - 1), maxDelay);
-			await sleep(delay);
-		}
-	}
-
-	throw new BalboaError("Verification polling timed out");
-}
-
-/**
- * Sleep utility
- */
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
  * Simple function-based API for non-React usage
  */
 export async function verifyWithBalboa(
@@ -135,15 +86,11 @@ export async function verifyWithBalboa(
 	config?: BalboaConfig,
 ): Promise<VerificationResult> {
 	const clientConfig = config || {
-		baseUrl: "http://localhost:3000",
+		apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY || "",
+		baseUrl: process.env.NEXT_PUBLIC_BALBOA_API_URL || "",
 		environment: "production",
 	};
 
-	const client = new BalboaWebClient(clientConfig);
-
-	// Create verification session
-	const session = await client.createVerificationSession(options);
-
-	// Poll for verification status
-	return pollForStatus(client, session.id);
+	const client = new BalboaClient(clientConfig);
+	return client.verifyWithBalboa(options);
 }

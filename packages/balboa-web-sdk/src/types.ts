@@ -12,6 +12,8 @@ export interface BalboaConfig {
 	timeout?: number;
 	/** Number of retry attempts */
 	retries?: number;
+	/** ElevenLabs Agent ID for voice conversations */
+	agentId?: string;
 }
 
 /**

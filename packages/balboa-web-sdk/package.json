@@ -2,6 +2,59 @@
 	"name": "@balboa/web",
 	"version": "0.1.0",
 	"private": true,
+	"description": "Balboa Voice Verification SDK for e-commerce fraud prevention",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"type-check": "tsc --noEmit",
+		"lint": "eslint .",
+		"clean": "rm -rf dist"
+	},
+	"peerDependencies": {
+		"react": "^18"
+	},
+	"dependencies": {
+		"@elevenlabs/react": "^0.7.1"
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@types/node": "^20",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
+		"tsup": "^8.0.0",
+		"typescript": "^5.6.3"
+	},
+	"keywords": [
+		"voice-verification",
+		"fraud-prevention",
+		"e-commerce",
+		"authentication",
+		"elevenlabs",
+		"sdk"
+	],
+	"author": "Balboa Team",
+	"license": "MIT"
+}
+
+{
+	"name": "@balboa/web",
+	"version": "0.1.0",
+	"private": true,
 	"description": "Balboa Web SDK - Frontend voice verification components and hooks",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
