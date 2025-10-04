@@ -66,3 +66,46 @@
     background-position: 200% 0;
   }
 }
+
+@keyframes rocky-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(234, 179, 8, 0.8);
+  }
+}
+
+@keyframes fight-glow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes victory-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes corner-post-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.8), 0 0 30px rgba(234, 179, 8, 0.6);
+  }
+}

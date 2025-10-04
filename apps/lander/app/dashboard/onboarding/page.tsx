@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Button } from "~/components/ui/button";
 import { useElevenLabsVerification } from "@balboa/web";
 
-export default function OnboardingPage(): React.FC {
+export default function OnboardingPage(): JSX.Element {
   const [isMuted, setIsMuted] = useState(false);
   
   // ElevenLabs configuration
@@ -84,184 +84,231 @@ export default function OnboardingPage(): React.FC {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Rocky Background with boxing ring aesthetic */}
+      <div className="absolute inset-0 bg-gradient-to-br from-red-900 via-red-800 to-black">
+        {/* Boxing ring ropes effect */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
+          <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
+          <div className="absolute top-0 right-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
+          <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
+        </div>
+        
+        {/* Corner posts */}
+        <div className="absolute top-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow"></div>
+        <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '0.5s'}}></div>
+        <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1.5s'}}></div>
+      </div>
 
-        {/* Onboarding Section */}
-        <Card className="bg-white shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-4xl font-bold text-slate-900 text-center">
-              Start Onboarding
-            </CardTitle>
-            <CardDescription className="text-slate-600 text-lg text-center">
-              Complete your setup to get started with Balboa
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center text-slate-600 mb-8">
-              <p>Welcome! Let's get you set up with Balboa's voice-powered 2FA protection.</p>
+      {/* Main content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-4xl mx-auto text-center">
+          
+          {/* Rocky Title */}
+          <div className="mb-12">
+            <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 mb-4 tracking-wider transform hover:scale-105 transition-transform duration-300">
+              BALBOA
+            </h1>
+            <div className="text-3xl font-bold text-white mb-2 tracking-widest">
+              VOICE VERIFICATION
             </div>
+            <div className="w-32 h-1 bg-gradient-to-r from-yellow-400 to-red-500 mx-auto mb-6"></div>
+            <p className="text-xl text-gray-300 font-semibold max-w-2xl mx-auto leading-relaxed">
+              Step into the ring. Your voice is your weapon. 
+              <span className="text-yellow-400 font-bold"> FIGHT FOR YOUR SECURITY.</span>
+            </p>
+          </div>
             
-            {/* Call Control Buttons */}
-            <div className="flex flex-col items-center space-y-4">
-              {status === 'connecting' ? (
-                // Connecting State
-                <div className="flex flex-col items-center space-y-4">
+          {/* Call Control Buttons */}
+          <div className="flex flex-col items-center space-y-8">
+            {status === 'connecting' ? (
+              // Connecting State - Rocky Training Montage Style
+              <div className="flex flex-col items-center space-y-6">
+                <div className="relative">
                   <Button 
                     disabled
-                    className="relative bg-blue-500 text-white font-bold py-6 px-12 text-xl rounded-xl shadow-2xl transition-all duration-300"
+                    className="relative bg-gradient-to-r from-red-600 to-red-800 text-white font-black py-8 px-16 text-2xl rounded-none border-4 border-yellow-400 shadow-2xl transition-all duration-300 transform hover:scale-105"
                     style={{
-                      boxShadow: '0 0 30px rgba(59, 130, 246, 0.6), 0 0 60px rgba(59, 130, 246, 0.4), 0 0 90px rgba(59, 130, 246, 0.2)',
-                      animation: 'pulse 2s infinite'
+                      boxShadow: '0 0 40px rgba(220, 38, 38, 0.8), 0 0 80px rgba(220, 38, 38, 0.6), 0 0 120px rgba(220, 38, 38, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.3)',
+                      animation: 'pulse 1.5s infinite'
                     }}
                   >
-                    <span className="relative z-10 flex items-center space-x-2">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Connecting...</span>
+                    <span className="relative z-10 flex items-center space-x-3">
+                      <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="tracking-wider">TRAINING...</span>
                     </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-700 opacity-50 animate-pulse"></div>
                   </Button>
-                  <p className="text-sm font-medium text-blue-600">
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-yellow-400 tracking-wider">
+                    🥊 PREPARING FOR BATTLE 🥊
+                  </p>
+                  <p className="text-sm font-medium text-gray-300 mt-2">
                     Establishing voice connection...
                   </p>
                 </div>
+              </div>
               ) : !isCallActive ? (
-                // Start Call Button
-                <Button 
-                  onClick={startElevenLabsCall}
-                  className="relative bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-12 text-xl rounded-xl shadow-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
-                  style={{
-                    boxShadow: '0 0 30px rgba(59, 130, 246, 0.6), 0 0 60px rgba(59, 130, 246, 0.4), 0 0 90px rgba(59, 130, 246, 0.2)',
-                    animation: 'pulse 2s infinite'
-                  }}
-                >
-                  <span className="relative z-10">Start Onboarding</span>
-                  <div 
-                    className="absolute inset-0 rounded-xl opacity-75"
+                // Start Call Button - Rocky's Entrance
+                <div className="relative">
+                  <Button 
+                    onClick={startElevenLabsCall}
+                    className="relative bg-gradient-to-r from-yellow-500 via-red-600 to-yellow-500 text-black font-black py-10 px-20 text-3xl rounded-none border-4 border-yellow-300 shadow-2xl transition-all duration-300 transform hover:scale-110 focus:outline-none z-20"
                     style={{
-                      background: 'linear-gradient(45deg, rgba(59, 130, 246, 0.3), rgba(147, 197, 253, 0.3), rgba(59, 130, 246, 0.3))',
-                      animation: 'shimmer 2s infinite'
+                      boxShadow: '0 0 50px rgba(234, 179, 8, 0.9), 0 0 100px rgba(220, 38, 38, 0.7), 0 0 150px rgba(234, 179, 8, 0.5), inset 0 0 30px rgba(255, 255, 255, 0.2)',
+                      animation: 'pulse 2s infinite'
                     }}
-                  />
-                </Button>
+                  >
+                    <span className="relative z-30 flex items-center space-x-4">
+                      <span className="text-4xl">🥊</span>
+                      <span className="tracking-widest">ENTER THE RING</span>
+                      <span className="text-4xl">🥊</span>
+                    </span>
+                    <div 
+                      className="absolute inset-0 opacity-60 z-10"
+                      style={{
+                        background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.3), rgba(234, 179, 8, 0.3), rgba(255, 255, 255, 0.3))',
+                        animation: 'shimmer 2s infinite'
+                      }}
+                    />
+                  </Button>
+                  
+                  {/* Glow effect - positioned behind button */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-red-500 opacity-30 blur-xl animate-pulse z-0"></div>
+                </div>
               ) : (
-                // Call Active State - End Call and Mute Buttons
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="flex space-x-4">
-                    {/* Mute Button */}
+                // Call Active State - Rocky's Corner Controls
+                <div className="flex flex-col items-center space-y-8">
+                  <div className="text-center mb-6">
+                    <div className="text-4xl font-black text-yellow-400 mb-2 tracking-wider">
+                      🥊 ROUND IN PROGRESS 🥊
+                    </div>
+                    <div className="text-lg font-bold text-white">
+                      Voice verification active - SPEAK YOUR TRUTH!
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-8">
+                    {/* Mute Button - Rocky's Corner */}
                     <Button 
                       onClick={toggleMute}
-                      className={`relative font-bold py-4 px-8 text-lg rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 ${
+                      className={`relative font-black py-6 px-10 text-xl rounded-none border-4 shadow-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none ${
                         isMuted 
-                          ? 'bg-orange-600 hover:bg-orange-700 text-white focus:ring-orange-300' 
-                          : 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-300'
+                          ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white border-orange-400' 
+                          : 'bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white border-gray-500'
                       }`}
                       style={{
                         boxShadow: isMuted 
-                          ? '0 0 20px rgba(234, 88, 12, 0.6), 0 0 40px rgba(234, 88, 12, 0.4)'
-                          : '0 0 20px rgba(75, 85, 99, 0.6), 0 0 40px rgba(75, 85, 99, 0.4)'
+                          ? '0 0 30px rgba(234, 88, 12, 0.8), 0 0 60px rgba(234, 88, 12, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3)'
+                          : '0 0 30px rgba(75, 85, 99, 0.8), 0 0 60px rgba(75, 85, 99, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3)'
                       }}
                     >
-                      <span className="relative z-10 flex items-center space-x-2">
-                        {isMuted ? (
-                          <>
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 011.414 0A9.972 9.972 0 0119 12a9.972 9.972 0 01-1.929 5.657 1 1 0 11-1.414-1.414A7.971 7.971 0 0017 12a7.971 7.971 0 00-1.343-4.243 1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                            <span>Unmute</span>
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                            <span>Mute</span>
-                          </>
-                        )}
+                      <span className="relative z-10 flex items-center space-x-3">
+                        <span className="text-2xl">
+                          {isMuted ? '🔊' : '🔇'}
+                        </span>
+                        <span className="tracking-wider">
+                          {isMuted ? 'UNMUTE' : 'MUTE'}
+                        </span>
                       </span>
                     </Button>
 
-                    {/* End Call Button */}
+                    {/* End Call Button - Rocky's Exit */}
                     <Button 
                       onClick={endElevenLabsCall}
-                      className="relative bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300"
+                      className="relative bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-black py-6 px-10 text-xl rounded-none border-4 border-red-400 shadow-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none"
                       style={{
-                        boxShadow: '0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.4)'
+                        boxShadow: '0 0 30px rgba(220, 38, 38, 0.8), 0 0 60px rgba(220, 38, 38, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3)'
                       }}
                     >
-                      <span className="relative z-10 flex items-center space-x-2">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                        </svg>
-                        <span>End Call</span>
+                      <span className="relative z-10 flex items-center space-x-3">
+                        <span className="text-2xl">🏁</span>
+                        <span className="tracking-wider">END FIGHT</span>
                       </span>
                     </Button>
                   </div>
                 </div>
               )}
               
-              {/* Call Status */}
+              {/* Call Status - Rocky Style */}
               {status === 'connecting' && (
-                <div className="text-center">
-                  <p className="text-sm font-medium text-blue-600">
-                    🔗 Connecting to voice service...
-                  </p>
+                <div className="text-center mt-8">
+                  <div className="inline-block bg-gradient-to-r from-red-800 to-red-900 border-2 border-yellow-400 px-6 py-3">
+                    <p className="text-lg font-bold text-yellow-400 tracking-wider">
+                      🔗 ESTABLISHING CONNECTION...
+                    </p>
+                  </div>
                 </div>
               )}
               
               {isCallActive && (
-                <div className="text-center">
-                  <p className="text-sm font-medium text-green-600">
-                    Voice call is active - speak to start your onboarding!
-                  </p>
-                  {isSpeaking && (
-                    <p className="text-sm font-medium text-blue-600 mt-1">
-                      🎙️ Agent is speaking...
+                <div className="text-center mt-8">
+                  <div className="inline-block bg-gradient-to-r from-green-800 to-green-900 border-2 border-green-400 px-8 py-4">
+                    <p className="text-xl font-black text-green-400 tracking-wider mb-2">
+                      🥊 FIGHT IS ON! 🥊
                     </p>
-                  )}
-                  {isMuted && (
-                    <p className="text-sm font-medium text-orange-600 mt-1">
-                      🎤 You are muted
+                    <p className="text-lg font-bold text-white">
+                      Voice verification active - SPEAK YOUR TRUTH!
                     </p>
-                  )}
-                </div>
-              )}
-
-              {/* Verification Result */}
-              {result && (
-                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h3 className="text-lg font-semibold text-green-800 mb-2">
-                    ✅ Verification Complete!
-                  </h3>
-                  <div className="text-sm text-green-700 space-y-1">
-                    <p><strong>Session ID:</strong> {result.callId}</p>
-                    <p><strong>Duration:</strong> {result.duration}s</p>
-                    {result.transcript && (
-                      <p><strong>Transcript:</strong> {result.transcript}</p>
+                    {isSpeaking && (
+                      <p className="text-lg font-bold text-blue-400 mt-2 tracking-wider">
+                        🎙️ OPPONENT IS SPEAKING...
+                      </p>
                     )}
-                    {result.summary && (
-                      <p><strong>Summary:</strong> {result.summary}</p>
+                    {isMuted && (
+                      <p className="text-lg font-bold text-orange-400 mt-2 tracking-wider">
+                        🔇 YOU ARE SILENCED
+                      </p>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Error Display */}
+              {/* Verification Result - Victory Display */}
+              {result && (
+                <div className="mt-12">
+                  <div className="bg-gradient-to-r from-yellow-600 to-yellow-800 border-4 border-yellow-400 p-8 text-center">
+                    <div className="text-6xl mb-4 animate-victory-bounce">🏆</div>
+                    <h3 className="text-4xl font-black text-black mb-4 tracking-wider">
+                      VICTORY ACHIEVED!
+                    </h3>
+                    <div className="bg-black bg-opacity-50 p-6 text-left">
+                      <div className="text-lg text-yellow-300 space-y-2">
+                        <p><span className="font-bold text-yellow-400">FIGHT ID:</span> {result.callId}</p>
+                        <p><span className="font-bold text-yellow-400">ROUND DURATION:</span> {result.duration}s</p>
+                        {result.transcript && (
+                          <p><span className="font-bold text-yellow-400">YOUR WORDS:</span> {result.transcript}</p>
+                        )}
+                        {result.summary && (
+                          <p><span className="font-bold text-yellow-400">FIGHT SUMMARY:</span> {result.summary}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Display - Defeat Screen */}
               {error && (
-                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <h3 className="text-lg font-semibold text-red-800 mb-2">
-                    ❌ Verification Failed
-                  </h3>
-                  <p className="text-sm text-red-700">
-                    {error.message}
-                  </p>
+                <div className="mt-12">
+                  <div className="bg-gradient-to-r from-red-600 to-red-800 border-4 border-red-400 p-8 text-center">
+                    <div className="text-6xl mb-4">💥</div>
+                    <h3 className="text-4xl font-black text-white mb-4 tracking-wider">
+                      FIGHT INTERRUPTED!
+                    </h3>
+                    <div className="bg-black bg-opacity-50 p-6">
+                      <p className="text-lg text-red-200 font-bold">
+                        {error.message}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );
