@@ -5,9 +5,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { Redis } from '@upstash/redis';
 import { Resend } from 'resend';
+import { db } from "./db";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { generateToken, setAuthToken, clearAuthToken, getCurrentUser } from "./jwt-auth";
 
 // Initialize Redis
 const redis = Redis.fromEnv();
@@ -26,6 +29,7 @@ export interface VerifyOTPResult {
   success: boolean;
   message: string;
   error?: string;
+  token?: string;
   user?: {
     id: string;
     email: string;
@@ -47,7 +51,7 @@ export interface AuthSession {
  */
 export async function sendOTP(email: string): Promise<SendOTPResult> {
   try {
-    // TODO: Implement email validation
+    // Validate email
     if (!email || !email.includes("@")) {
       return {
         success: false,
@@ -56,22 +60,19 @@ export async function sendOTP(email: string): Promise<SendOTPResult> {
       };
     }
 
-    // TODO: Implement rate limiting
-    // Check if user has requested OTP recently (e.g., within last minute)
-    
-    // TODO: Generate secure 6-digit OTP
+    // Generate secure 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    const result = await redis.setex(`otp:${email}`, 300, otp);
+    // Store OTP in Redis with 5-minute expiration
+    await redis.setex(`otp:${email}`, 300, otp);
 
-    // TODO: Send email via email service
+    // Send email via Resend
     await resend.emails.send({
       from: 'Balboa Hackathon <onboarding@resend.dev>',
       to: [email],
       subject: 'Your Balboa Hackathon Verification Code',
       html: generateOTPEmailHTML(otp)
     });
-
 
     console.log(`OTP sent to ${email}: ${otp}`); // Remove in production
     
@@ -97,7 +98,7 @@ export async function sendOTP(email: string): Promise<SendOTPResult> {
  */
 export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPResult> {
   try {
-    // TODO: Validate OTP format
+    // Validate OTP format
     if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
       return {
         success: false,
@@ -106,6 +107,7 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
       };
     }
 
+    // Verify OTP from Redis
     const storedOTP = await redis.get(`otp:${email}`);
     const storedOTPString = storedOTP ? String(storedOTP) : null;
 
@@ -117,28 +119,51 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
       };
     }
 
-    console.log("OTP verified");
-
-    // TODO: Create or update user in database
-    // const user = await createOrUpdateUser({
-    //   email,
-    //   emailVerified: true,
-    //   lastLoginAt: new Date()
-    // });
-
-    // TODO: Generate secure session token (JWT or session ID)
-    // NEXT AUTH PLACEHOLDER
+    // Clear the OTP from Redis
     await redis.del(`otp:${email}`);
 
+    // Create or update user in database
+    let user;
+    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    
+    if (existingUser.length === 0) {
+      // Create new user
+      const newUser = await db.insert(users).values({
+        email,
+        name: email.split("@")[0],
+      }).returning();
+      user = newUser[0];
+    } else {
+      // Update existing user
+      const updatedUser = await db.update(users)
+        .set({ 
+          updatedAt: new Date()
+        })
+        .where(eq(users.email, email))
+        .returning();
+      user = updatedUser[0];
+    }
+
     console.log(`OTP verified for ${email}: ${otp}`); // Remove in production
+    
+    // Generate JWT token
+    const token = generateToken({
+      userId: user!.id,
+      email: user!.email,
+      name: user!.name || email.split("@")[0]
+    });
+    
+    // Set token in cookies
+    await setAuthToken(token);
     
     return {
       success: true,
       message: "Email verified successfully",
+      token: token,
       user: {
-        id: "temp-user-id", // TODO: Use real user ID
-        email,
-        name: email.split("@")[0] // TODO: Get from database
+        id: user!.id,
+        email: user!.email,
+        name: user!.name || email.split("@")[0]
       }
     };
   } catch (error) {
@@ -170,24 +195,23 @@ export async function resendOTP(email: string): Promise<SendOTPResult> {
 }
 
 /**
- * Get current user session
+ * Get current user session using JWT
  * @returns Promise<AuthSession | null>
  */
 export async function getSession(): Promise<AuthSession | null> {
   try {
-    // TODO: Read session cookie
-    // const sessionToken = cookies().get('session')?.value;
-    // if (!sessionToken) return null;
+    const user = await getCurrentUser();
+    
+    if (!user) {
+      return null;
+    }
 
-    // TODO: Verify session token
-    // const payload = await verifySessionToken(sessionToken);
-    // if (!payload) return null;
-
-    // TODO: Check if session is expired
-    // if (payload.expiresAt < new Date()) return null;
-
-    // TODO: Return session data
-    return null; // Placeholder
+    return {
+      userId: user.id,
+      email: user.email,
+      isVerified: true,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    };
   } catch (error) {
     console.error("Error getting session:", error);
     return null;
@@ -195,21 +219,13 @@ export async function getSession(): Promise<AuthSession | null> {
 }
 
 /**
- * Sign out user
+ * Sign out user using JWT
  * @returns Promise<void>
  */
 export async function signOut(): Promise<void> {
   try {
-    // TODO: Clear session cookie
-    // cookies().delete('session');
-    
-    // TODO: Invalidate session token
-    // const sessionToken = cookies().get('session')?.value;
-    // if (sessionToken) {
-    //   await invalidateSessionToken(sessionToken);
-    // }
-
-    // TODO: Redirect to home
+    // Clear the auth token cookie
+    await clearAuthToken();
     redirect('/');
   } catch (error) {
     console.error("Error signing out:", error);
@@ -233,15 +249,3 @@ function generateOTPEmailHTML(otp: string): string {
     </div>
   `;
 }
-
-/**
- * Test server action
- */
-export async function testAction(): Promise<void> {
-  console.log("sup");
-}
-
-/**
- * Required env vars: DATABASE_URL, REDIS_URL, EMAIL_SERVICE_API_KEY, JWT_SECRET
- * Optional: EMAIL_FROM, RATE_LIMIT_WINDOW, OTP_EXPIRY, SESSION_EXPIRY
- */
