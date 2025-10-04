@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
-import { sendOTP } from "~/lib/auth-actions";
+import { sendOTP, verifyOTP } from "~/lib/auth-actions";
 import { useState } from "react";
 
 export default function BalboaApp() {
@@ -34,7 +34,25 @@ export default function BalboaApp() {
   };
 
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return; // Prevent multiple characters
+    // Handle paste of full OTP code
+    if (value.length > 1) {
+      // Extract only numeric characters and limit to 6 digits
+      const digits = value.replace(/\D/g, '').slice(0, 6);
+      
+      if (digits.length === 6) {
+        // Distribute the pasted digits across all inputs
+        const newOtp = digits.split('');
+        setOtp(newOtp);
+        
+        // Focus the last input
+        const lastInput = document.getElementById(`otp-5`);
+        lastInput?.focus();
+        return;
+      }
+    }
+    
+    // Handle single character input
+    if (value.length > 1) return; // Prevent multiple characters for single input
     
     const newOtp = [...otp];
     newOtp[index] = value;
@@ -51,6 +69,45 @@ export default function BalboaApp() {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       const prevInput = document.getElementById(`otp-${index - 1}`);
       prevInput?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    
+    // Extract only numeric characters and limit to 6 digits
+    const digits = pastedData.replace(/\D/g, '').slice(0, 6);
+    
+    if (digits.length > 0) {
+      // Create new OTP array with pasted digits
+      const newOtp = [...otp];
+      
+      // Fill from current index onwards
+      for (let i = 0; i < digits.length && i < 6; i++) {
+        newOtp[i] = digits[i] || '';
+      }
+      
+      setOtp(newOtp);
+      
+      // Focus the next empty input or the last one
+      const nextEmptyIndex = newOtp.findIndex((digit, idx) => !digit && idx > 0);
+      const focusIndex = nextEmptyIndex > 0 ? nextEmptyIndex : Math.min(digits.length, 5);
+      const nextInput = document.getElementById(`otp-${focusIndex}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    console.log("Verifying code...");
+    console.log(email, otp.join(''));
+    const result = await verifyOTP(email, otp.join(''));
+    console.log(result);
+    if (result.success) {
+      setShowOTPInput(false);
+      setMessage(result.message);
+    } else {
+      setMessage(result.message || "Failed to verify code");
     }
   };
 
@@ -135,6 +192,7 @@ export default function BalboaApp() {
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onPaste={handleOtpPaste}
                     className="w-12 h-12 text-center text-lg font-semibold border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 ))}
@@ -143,6 +201,7 @@ export default function BalboaApp() {
               <Button 
                 className="w-full"
                 disabled={otp.some(digit => !digit)}
+                onClick={handleVerifyCode}
               >
                 Verify Code
               </Button>
