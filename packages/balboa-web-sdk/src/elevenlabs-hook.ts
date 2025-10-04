@@ -7,20 +7,6 @@ import type { BalboaConfig, ElevenLabsCallResult } from "./types";
  * React hook for ElevenLabs voice verification
  */
 export function useElevenLabsVerification(config: BalboaConfig) {
-	console.log('🔧 ElevenLabs Hook Initialized');
-	console.log('📋 Config:', {
-		apiKey: config.apiKey ? `${config.apiKey.substring(0, 8)}...` : 'MISSING',
-		baseUrl: config.baseUrl,
-		agentId: config.agentId ? `${config.agentId.substring(0, 8)}...` : 'MISSING',
-		environment: config.environment,
-		timeout: config.timeout,
-	});
-	console.log('🌍 Environment Variables:', {
-		NEXT_PUBLIC_ELEVENLABS_AGENT_ID: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ? `${process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID.substring(0, 8)}...` : 'MISSING',
-		NEXT_PUBLIC_BALBOA_API_KEY: process.env.NEXT_PUBLIC_BALBOA_API_KEY ? `${process.env.NEXT_PUBLIC_BALBOA_API_KEY.substring(0, 8)}...` : 'MISSING',
-		NEXT_PUBLIC_BALBOA_API_URL: process.env.NEXT_PUBLIC_BALBOA_API_URL || 'MISSING',
-	});
-
 	const [state, setState] = useState<{
 		isActive: boolean;
 		result: ElevenLabsCallResult | null;
@@ -99,7 +85,7 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 			}));
 		},
 		onAudio: (audioData: any) => {
-			console.log('🎵 Audio data received:', audioData);
+			// console.log('🎵 Audio data received:', audioData);
 		},
 		onModeChange: (mode: any) => {
 			console.log('🔄 ElevenLabs mode changed:', mode);
