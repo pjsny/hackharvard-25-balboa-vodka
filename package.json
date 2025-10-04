@@ -7,8 +7,7 @@
 		"build": "turbo build",
 		"dev": "turbo dev",
 		"lint": "turbo lint",
-		"format": "prettier --write \"**/*.{ts,tsx,md}\"",
-		"ui": "pnpm --filter @repo/ui ui"
+		"format": "prettier --write \"**/*.{ts,tsx,md}\""
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
@@ -16,12 +15,12 @@
 		"prettier": "^3.3.3",
 		"turbo": "2.1.1"
 	},
-	"packageManager": "pnpm@8.15.6",
+	"packageManager": "pnpm@9.14.4",
 	"engines": {
 		"node": ">=20.17.0"
 	},
 	"volta": {
 		"node": "20.17.0",
-		"pnpm": "8.15.6"
+		"pnpm": "9.14.4"
 	}
 }
