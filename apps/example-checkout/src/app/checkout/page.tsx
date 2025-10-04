@@ -58,10 +58,14 @@ export default function Checkout() {
 				body: JSON.stringify({ email: checkoutData.email }),
 			});
 
+			if (!verifyResponse.ok) {
+				throw new Error(`HTTP error! status: ${verifyResponse.status}`);
+			}
+
 			const verifyData = await verifyResponse.json();
 
-			if (verifyData.id) {
-				setVerificationSessionId(verifyData.id);
+			if (verifyData.sessionId) {
+				setVerificationSessionId(verifyData.sessionId);
 				setShowVoiceVerification(true);
 			} else {
 				setError("Failed to create verification session");
@@ -438,6 +442,10 @@ export default function Checkout() {
 				onClose={handleVoiceVerificationClose}
 				onSuccess={handleVoiceVerificationSuccess}
 				email={checkoutData.email}
+				config={{
+					apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY,
+					agentId: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID,
+				}}
 			/>
 		</div>
 	);

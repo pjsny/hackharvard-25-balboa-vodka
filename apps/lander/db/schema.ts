@@ -14,3 +14,14 @@ export const users = pgTable('users', {
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+// FK from users to
+
+export const securityPairs = pgTable('security_pairs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id),
+  question: varchar('question', { length: 255 }).notNull(),
+  answer: varchar('answer', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

@@ -2,6 +2,7 @@
 // Default export for convenience
 export { BalboaWebClient, BalboaWebClient as default } from "./client";
 export { VoiceVerificationDialog } from "./components/VoiceVerificationDialog";
+export { BalboaVerificationPopup } from "./components/BalboaVerificationPopup";
 // Error exports
 export { BalboaError } from "./errors";
 export { useBalboa, verifyWithBalboa, useElevenLabsVerification } from "./hooks";

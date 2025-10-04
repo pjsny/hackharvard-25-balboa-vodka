@@ -10,8 +10,7 @@ function isValidEmail(email: string): boolean {
 const corsHeaders = {
 	"Access-Control-Allow-Origin": "http://localhost:3001",
 	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-	"Access-Control-Allow-Headers":
-		"Content-Type, Authorization, X-Requested-With",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
 	"Access-Control-Allow-Credentials": "true",
 	"Access-Control-Max-Age": "86400", // 24 hours
 };
@@ -24,7 +23,7 @@ export async function OPTIONS(request: NextRequest) {
 	if (origin === "http://localhost:3001") {
 		return new NextResponse(null, {
 			status: 200,
-			headers: corsHeaders,
+			headers: corsHeaders
 		});
 	}
 
@@ -39,12 +38,12 @@ export async function POST(request: NextRequest) {
 		if (origin !== "http://localhost:3001") {
 			return NextResponse.json(
 				{ error: "CORS policy violation" },
-				{ status: 403, headers: corsHeaders },
+				{ status: 403, headers: corsHeaders }
 			);
 		}
 
 		const body = await request.json();
-		const { email } = body;
+		const { email, phrase } = body;
 
 		// Validate email
 		if (!email || typeof email !== "string" || !isValidEmail(email)) {
@@ -54,42 +53,54 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Create verification session
-		console.log("Creating verification session for email:", email);
+		// Validate phrase
+		if (!phrase || typeof phrase !== "string") {
+			return NextResponse.json(
+				{ error: "Phrase is required" },
+				{ status: 400, headers: corsHeaders },
+			);
+		}
 
-		// SECURE APPROACH: Generate a short-lived token for the frontend
-		const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		// TODO: Replace with your actual validation logic
+		// For now, using a simple example validation
+		const expectedPhrase = "Balboa verification complete";
+		const isValidPhrase = phrase.toLowerCase().trim() === expectedPhrase.toLowerCase();
 
-		// In production, you would:
-		// 1. Generate a JWT token with the agent ID and session info
-		// 2. Set expiration to 5 minutes
-		// 3. Sign with your secret key
-		// 4. Return only the token, not the agent ID
+		// TODO: Replace with your actual email validation logic
+		// For now, using a simple example validation
+		const validEmails = [
+			"user@example.com",
+			"test@balboa.com",
+			"admin@example.com"
+		];
+		const isEmailValid = validEmails.includes(email.toLowerCase());
 
-		// For now, return the session info
-		// TODO: Replace with actual JWT token generation
-		const secureToken = {
-			sessionId: sessionId,
-			expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
-			// In production, this would be a signed JWT
-		};
+		if (isValidPhrase && isEmailValid) {
+			return NextResponse.json(
+				{
+					authenticated: true,
+					message: "Authentication successful"
+				},
+				{ headers: corsHeaders }
+			);
+		} else {
+			return NextResponse.json(
+				{
+					authenticated: false,
+					message: "Invalid email or phrase"
+				},
+				{ status: 401, headers: corsHeaders }
+			);
+		}
+
+	} catch (error) {
+		console.error("Error in validate API:", error);
 
 		return NextResponse.json(
 			{
-				verified: false, // Don't mark as verified until actual verification happens
-				sessionId: sessionId,
-				// Frontend should use this token for verification
-				token: Buffer.from(JSON.stringify(secureToken)).toString("base64"),
-				transcript: "Voice verification session created - ready to start",
-				status: "ready", // Indicate the session is ready but not completed
+				error: "Failed to validate email and phrase",
+				authenticated: false
 			},
-			{ headers: corsHeaders },
-		);
-	} catch (error) {
-		console.error("Error in verify API:", error);
-
-		return NextResponse.json(
-			{ error: "Failed to create verification session" },
 			{ status: 500, headers: corsHeaders },
 		);
 	}
