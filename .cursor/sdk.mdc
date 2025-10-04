@@ -1,0 +1,510 @@
+---
+description: when talking about sdk
+alwaysApply: false
+---
+# Balboa Voice Verification SDK: Complete Technical Specification
+
+## 🎯 **Overview**
+
+Balboa provides voice-based multi-factor authentication for e-commerce fraud prevention. The system consists of two SDKs that work together to provide seamless voice verification integrated into checkout flows.
+
+## 🏗️ **Architecture**
+
+### **System Components**
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend API   │    │   VAPI Service  │
+│   (@balboa/web) │◄──►│   (Your API)    │◄──►│   (Voice AI)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React App     │    │   Redis Store   │    │   Gemini AI     │
+│   (Checkout)    │    │   (Sessions)    │    │   (LLM)         │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **Data Flow**
+
+```mermaid
+sequenceDiagram
+    participant C as Checkout Page
+    participant W as @balboa/web
+    participant B as Backend API
+    participant R as Redis
+    participant V as VAPI
+    participant G as Gemini
+
+    C->>W: startVerification(options)
+    W->>B: POST /api/verify
+    B->>R: Store session
+    B->>W: { sessionId, status }
+
+    W->>B: GET /api/verify/{id}/vapi-token
+    B->>W: { token, expiresIn }
+
+    W->>V: Initialize with JWT token
+    W->>V: Start voice call
+    V->>C: Voice conversation
+
+    V->>B: Webhook: call-ended
+    B->>G: Process with Gemini
+    B->>R: Update session result
+
+    W->>B: GET /api/verify/{id}/status
+    B->>W: { verified, confidence }
+    W->>C: Verification complete
+```
+
+## 📦 **Package Structure**
+
+### **`@balboa/web` - Frontend SDK**
+
+**Purpose:** React components and hooks for frontend integration
+
+**Key Features:**
+- React hooks for easy integration
+- Voice verification dialog component
+- JWT token management
+- VAPI integration with backend tokens
+- Automatic session management
+
+**Dependencies:**
+```json
+{
+  "@vapi-ai/web": "^1.0.0",
+  "@radix-ui/react-dialog": "^1.0.0",
+  "react": "^18.0.0",
+  "zod": "^3.0.0"
+}
+```
+
+### **`@balboa/server-sdk` - Backend Client SDK**
+
+**Purpose:** HTTP client for calling your backend API
+
+**Key Features:**
+- HTTP client with retry logic
+- Type-safe API calls
+- Error handling and transformation
+- Session management
+- VAPI token fetching
+
+**Dependencies:**
+```json
+{
+  "zod": "^3.0.0"
+}
+```
+
+## 🔌 **API Specifications**
+
+### **Backend API Endpoints**
+
+#### **1. Create Verification Session**
+```
+POST /api/verify
+Content-Type: application/json
+
+Request:
+{
+  "transactionId": "string",
+  "customerData": "object",
+  "riskLevel": "number" // optional
+}
+
+Response:
+{
+  "id": "string",
+  "status": "pending" | "completed" | "failed"
+}
+```
+
+#### **2. Get VAPI Token**
+```
+GET /api/verify/{sessionId}/vapi-token
+
+Response:
+{
+  "token": "string", // JWT token for VAPI
+  "sessionId": "string",
+  "expiresIn": "5m"
+}
+```
+
+#### **3. Get Verification Status**
+```
+GET /api/verify/{sessionId}/status
+
+Response:
+{
+  "status": "pending" | "completed" | "failed",
+  "verified": "boolean | null",
+  "confidence": "number | null",
+  "error": "string | null",
+  "details": "object | null"
+}
+```
+
+#### **4. Submit VAPI Result**
+```
+POST /api/verify/{sessionId}/vapi-result
+Content-Type: application/json
+
+Request:
+{
+  "callId": "string",
+  "recording": "string",
+  "transcript": "string",
+  "summary": "string" // optional
+}
+
+Response:
+{
+  "success": true
+}
+```
+
+#### **5. VAPI Webhook**
+```
+POST /api/webhooks/vapi
+Content-Type: application/json
+
+Request:
+{
+  "type": "call-ended" | "call-started" | "transcript",
+  "callId": "string",
+  "sessionId": "string", // from metadata
+  "transcript": "string",
+  "recording": "string"
+}
+```
+
+## 🎨 **Frontend Integration**
+
+### **Basic Usage**
+
+```typescript
+import { useBalboaVerification } from "@balboa/web";
+
+function CheckoutPage() {
+  const { startVerification, isOpen, currentOptions, handleSuccess } = useBalboaVerification({
+    onSuccess: () => {
+      // Proceed to payment
+      console.log("Verification successful!");
+    },
+    onError: (error) => {
+      console.error("Verification failed:", error);
+    }
+  });
+
+  const handlePayment = async () => {
+    // Detect high-risk transaction
+    if (isHighRisk) {
+      await startVerification({
+        transactionId: `txn_${Date.now()}`,
+        customerData: {
+          email: user.email,
+          cardNumber: card.number,
+          amount: cart.total
+        },
+        riskLevel: 75
+      });
+    } else {
+      // Proceed directly to payment
+      processPayment();
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handlePayment}>Pay Now</button>
+
+      {/* Voice verification dialog appears automatically */}
+      {isOpen && currentOptions && (
+        <VoiceVerificationDialog
+          options={currentOptions}
+          onSuccess={handleSuccess}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+### **Advanced Usage**
+
+```typescript
+import { useBalboa, BalboaClient } from "@balboa/web";
+
+function CustomCheckout() {
+  const { verifyWithBalboa, isLoading, result, error } = useBalboa();
+
+  const handleCustomVerification = async () => {
+    try {
+      const result = await verifyWithBalboa({
+        transactionId: "custom_txn_123",
+        customerData: {
+          email: "user@example.com",
+          amount: 99.99,
+          customField: "value"
+        }
+      });
+
+      if (result.verified) {
+        console.log("Verification successful:", result.confidence);
+      }
+    } catch (error) {
+      console.error("Verification failed:", error);
+    }
+  };
+
+  return (
+    <div>
+      {isLoading && <div>Verifying...</div>}
+      {result && <div>Verified: {result.verified}</div>}
+      {error && <div>Error: {error.message}</div>}
+
+      <button onClick={handleCustomVerification}>
+        Verify Voice
+      </button>
+    </div>
+  );
+}
+```
+
+## 🔧 **Backend Integration**
+
+### **Server SDK Usage**
+
+```typescript
+import { BalboaServerClient } from "@balboa/server-sdk";
+
+const client = new BalboaServerClient({
+  baseUrl: "https://api.yourdomain.com",
+  apiKey: process.env.BALBOA_API_KEY,
+  environment: "production"
+});
+
+// Create verification session
+const session = await client.createVerificationSession({
+  transactionId: "txn_123",
+  customerData: {
+    email: "user@example.com",
+    cardNumber: "4242424242424242",
+    amount: 99.99
+  },
+  riskLevel: 75
+});
+
+// Get VAPI token for frontend
+const tokenData = await client.getVapiToken(session.id);
+
+// Check verification status
+const status = await client.getVerificationStatus(session.id);
+```
+
+### **Environment Variables**
+
+```bash
+# Backend API
+BALBOA_API_URL=https://api.yourdomain.com
+BALBOA_API_KEY=your_api_key
+
+# Redis (for session storage)
+KV_REST_API_URL=https://your-redis.upstash.io
+KV_REST_API_TOKEN=your_redis_token
+
+# VAPI (for voice calls)
+VAPI_API_KEY=your_vapi_key
+
+# Gemini (for LLM processing)
+GEMINI_API_KEY=your_gemini_key
+```
+
+## 🎤 **Voice Verification Process**
+
+### **1. Risk Assessment**
+- Email domain analysis (temporary emails flagged)
+- Card number validation (test cards detected)
+- Transaction amount thresholds
+- Geographic risk factors
+- Device fingerprinting
+- Velocity analysis
+
+### **2. Voice Verification**
+- **Phrase Accuracy:** User must say "Balboa verification complete"
+- **Audio Fingerprinting:** Cryptographic validation
+- **Voice Embeddings:** Biometric comparison
+- **Liveness Detection:** Ensures real human speech
+- **Audio Quality:** Background noise analysis
+
+### **3. Confidence Scoring**
+```typescript
+const confidence = (
+  phraseAccuracy * 0.4 +      // 40% weight
+  fingerprintValid * 0.3 +    // 30% weight
+  voiceMatch * 0.3            // 30% weight
+);
+
+const verified = confidence >= 0.75 && phraseMatch && fingerprintValid;
+```
+
+## 🔐 **Security Features**
+
+### **JWT Token Management**
+- Short-lived tokens (5 minutes)
+- Session-scoped permissions
+- Automatic token refresh
+- Secure token transmission
+
+### **API Security**
+- Bearer token authentication
+- Request validation with Zod
+- Rate limiting support
+- CORS configuration
+
+### **Data Protection**
+- Redis session encryption
+- Secure webhook validation
+- PII data handling
+- Audit logging
+
+## 📊 **Error Handling**
+
+### **Error Types**
+```typescript
+class BalboaError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+    public statusCode?: number,
+    public originalError?: Error
+  ) {
+    super(message);
+    this.name = "BalboaError";
+  }
+}
+```
+
+### **Error Codes**
+- `SESSION_NOT_FOUND` - Invalid session ID
+- `INVALID_SESSION_STATUS` - Session not in pending state
+- `API_ERROR` - Backend API error
+- `VAPI_ERROR` - Voice call failed
+- `VERIFICATION_FAILED` - Voice verification unsuccessful
+- `TIMEOUT` - Request timeout
+
+## 🚀 **Deployment**
+
+### **Frontend Deployment**
+```bash
+npm install @balboa/web
+# or
+pnpm add @balboa/web
+```
+
+### **Backend Deployment**
+```bash
+npm install @balboa/server-sdk
+# or
+pnpm add @balboa/server-sdk
+```
+
+### **Environment Setup**
+1. Configure Redis for session storage
+2. Set up VAPI API keys
+3. Configure Gemini API keys
+4. Deploy backend API endpoints
+5. Configure webhook URLs
+
+## 📈 **Performance Considerations**
+
+### **Optimizations**
+- Redis caching for session data
+- Exponential backoff for retries
+- Connection pooling
+- Request batching
+- CDN for static assets
+
+### **Monitoring**
+- Session success rates
+- Verification confidence scores
+- API response times
+- Error rates by endpoint
+- Voice call completion rates
+
+## 🔄 **Future Enhancements**
+
+### **Planned Features**
+- Multi-language support
+- Custom verification phrases
+- Advanced fraud detection
+- Real-time analytics dashboard
+- Webhook event streaming
+- Custom voice models
+
+### **Integration Options**
+- Shopify app
+- WooCommerce plugin
+- Stripe integration
+- PayPal integration
+- Custom e-commerce platforms
+
+---
+
+This technical specification provides a complete overview of the Balboa voice verification system, including architecture, API design, integration patterns, and implementation details.
+
+
+Exactly! You're absolutely right. Let me simplify this:
+
+## 🎯 **Our Backend API - The Simple Truth:**
+
+### **What It Actually Does:**
+1. **Database Lookups** - Checks our database for customer/transaction details
+2. **Session Storage** - Stores verification sessions in Redis
+3. **Token Generation** - Creates JWT tokens for VAPI
+4. **Webhook Receiver** - Gets results from VAPI and stores them
+5. **Status Provider** - Returns verification status to frontend
+
+### **What It Does NOT Do:**
+- ❌ Any voice processing
+- ❌ Any AI/LLM work
+- ❌ Any audio analysis
+- ❌ Any complex verification logic
+
+## 🔧 **Simplified Architecture:**
+
+```
+Frontend → Our Backend (database lookups + Redis) → VAPI (does all the voice work)
+```
+
+### **Our Backend's Job:**
+- "Hey database, is this customer high-risk?"
+- "Store this session in Redis"
+- "Generate a token for VAPI"
+- "VAPI called back with results? Store them in Redis"
+- "Frontend wants status? Check Redis and return it"
+
+### **VAPI's Job:**
+- Handle the entire voice conversation
+- Use ElevenLabs for speech
+- Use Gemini for responses
+- Process the verification
+- Send results back to us
+
+## 📝 **Corrected Tech Spec:**
+
+**Our Backend API is just a simple data layer:**
+- Database queries for customer data
+- Redis for session management
+- JWT token generation
+- Webhook endpoint
+- Status API
+
+**That's it.** VAPI does all the heavy lifting with voice, AI, and verification logic.
+
+Much simpler than I was making it! Our backend is essentially a "data service" that VAPI calls back to.

@@ -1,6 +1,6 @@
 import Vapi from "@vapi-ai/web";
-import { createBalboaError } from "./errors";
 import type { BalboaConfig, VapiCallResult } from "./types";
+import { BalboaError } from "./types";
 
 /**
  * VAPI integration for voice conversations
@@ -58,7 +58,7 @@ export class BalboaVapiIntegration {
 
 				this.vapi.on("error" as any, (error: any) => {
 					reject(
-						createBalboaError(
+						new BalboaError(
 							`VAPI call failed: ${error.message}`,
 							"VAPI_ERROR",
 							error,
@@ -68,11 +68,11 @@ export class BalboaVapiIntegration {
 
 				// Set timeout
 				setTimeout(() => {
-					reject(createBalboaError("VAPI call timed out", "TIMEOUT"));
+					reject(new BalboaError("VAPI call timed out", "TIMEOUT"));
 				}, this.config.timeout || 30000);
 			});
 		} catch (error) {
-			throw createBalboaError(
+			throw new BalboaError(
 				`Failed to start VAPI conversation: ${getErrorMessage(error)}`,
 				"VAPI_ERROR",
 				error instanceof Error ? error : undefined,

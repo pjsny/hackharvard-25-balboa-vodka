@@ -1,5 +1,6 @@
 "use client";
 
+import { useBalboaVerification } from "@balboa/web";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,20 @@ export default function Checkout() {
 	const [fraudRisk, setFraudRisk] = useState<FraudRisk | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
-	const [showVoiceDialog, setShowVoiceDialog] = useState(false);
+
+	const {
+		startVerification,
+		isOpen,
+		currentOptions,
+		handleSuccess,
+		handleClose,
+	} = useBalboaVerification({
+		onSuccess: () => {
+			setPurchasedItems([...cart.items]);
+			setStep("success");
+			clearCart();
+		},
+	});
 
 	// Redirect if cart is empty (but not if we're in success state)
 	useEffect(() => {
@@ -75,7 +89,11 @@ export default function Checkout() {
 			setFraudRisk(risk);
 
 			if (risk.isHighRisk) {
-				setShowVoiceDialog(true);
+				startVerification({
+					transactionId: `txn_${Date.now()}`,
+					customerData: checkoutData,
+					riskLevel: risk.riskScore,
+				});
 			} else {
 				setPurchasedItems([...cart.items]);
 				setStep("success");
@@ -87,7 +105,6 @@ export default function Checkout() {
 	};
 
 	const handleVoiceVerificationSuccess = () => {
-		setShowVoiceDialog(false);
 		setPurchasedItems([...cart.items]);
 		setStep("success");
 		clearCart();
@@ -408,14 +425,21 @@ export default function Checkout() {
 			</div>
 
 			{/* Voice Verification Dialog */}
-			<VoiceVerificationDialog
-				isOpen={showVoiceDialog}
-				onClose={() => setShowVoiceDialog(false)}
-				onSuccess={handleVoiceVerificationSuccess}
-				transactionId={`txn_${Date.now()}`}
-				customerData={checkoutData}
-				riskLevel={fraudRisk?.riskScore}
-			/>
+			{currentOptions && (
+				<VoiceVerificationDialog
+					isOpen={isOpen}
+					onClose={handleClose}
+					onSuccess={handleSuccess}
+					transactionId={currentOptions.transactionId}
+					customerData={currentOptions.customerData}
+					riskLevel={currentOptions.riskLevel}
+				/>
+			)}
+		</div>
+	);
+}
+				/>
+			)}
 		</div>
 	);
 }

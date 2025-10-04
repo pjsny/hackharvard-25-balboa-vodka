@@ -1,0 +1,60 @@
+{
+	"name": "@balboa/web",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Balboa Web SDK - Frontend voice verification components and hooks",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"type-check": "tsc --noEmit",
+		"lint": "eslint .",
+		"clean": "rm -rf dist"
+	},
+	"peerDependencies": {
+		"react": "^18",
+		"react-dom": "^18"
+	},
+	"dependencies": {
+		"@vapi-ai/web": "^2.4.0",
+		"@radix-ui/react-dialog": "^1.1.15",
+		"lucide-react": "^0.468.0",
+		"clsx": "^2.1.1",
+		"tailwind-merge": "^2.5.4"
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@types/node": "^20",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
+		"tsup": "^8.0.0",
+		"typescript": "^5.6.3"
+	},
+	"keywords": [
+		"voice-verification",
+		"fraud-prevention",
+		"e-commerce",
+		"authentication",
+		"sdk",
+		"typescript",
+		"react",
+		"balboa",
+		"frontend"
+	],
+	"author": "Balboa Team",
+	"license": "MIT"
+}

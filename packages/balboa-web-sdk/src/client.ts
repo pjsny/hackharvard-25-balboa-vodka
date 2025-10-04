@@ -1,4 +1,3 @@
-import { createBalboaError } from "./errors";
 import type {
 	BalboaConfig,
 	VerificationOptions,
@@ -10,9 +9,9 @@ import { BalboaError } from "./types";
 import { BalboaVapiIntegration } from "./vapi-integration";
 
 /**
- * Main Balboa SDK client
+ * Main Balboa Web SDK client
  */
-export class BalboaClient {
+export class BalboaWebClient {
 	private config: BalboaConfig;
 	private vapiIntegration: BalboaVapiIntegration;
 
@@ -50,8 +49,12 @@ export class BalboaClient {
 			// 3. Submit VAPI result to backend
 			await this.submitVapiResult(session.id, vapiResult);
 
-			// 4. Wait for completion
-			const result = await this.waitForCompletion(session.id, options);
+			// 4. Poll for completion
+			const result = await this.waitForCompletion(
+				session.id,
+				options.timeout || this.config.timeout!,
+				options.retries || this.config.retries!,
+			);
 
 			options.onProgress?.("completed");
 			return result;
@@ -62,7 +65,7 @@ export class BalboaClient {
 	}
 
 	/**
-	 * Start a verification session on the backend
+	 * Start verification session on the backend
 	 */
 	private async startVerificationSession(
 		options: VerificationOptions,
@@ -72,16 +75,9 @@ export class BalboaClient {
 			body: JSON.stringify({
 				transactionId: options.transactionId,
 				customerData: options.customerData,
-				riskLevel: options.riskLevel || 0,
+				riskLevel: options.riskLevel,
 			}),
 		});
-
-		if (!response.ok) {
-			throw createBalboaError(
-				`Failed to start verification session: ${response.statusText}`,
-				"API_ERROR",
-			);
-		}
 
 		return response.json();
 	}
@@ -91,7 +87,12 @@ export class BalboaClient {
 	 */
 	private async submitVapiResult(
 		sessionId: string,
-		vapiResult: { callId: string; recording: string; transcript: string },
+		vapiResult: {
+			callId: string;
+			recording: string;
+			transcript: string;
+			summary?: string;
+		},
 	): Promise<void> {
 		const response = await this.makeRequest(
 			`/api/verify/${sessionId}/vapi-result`,
@@ -101,69 +102,68 @@ export class BalboaClient {
 					callId: vapiResult.callId,
 					recording: vapiResult.recording,
 					transcript: vapiResult.transcript,
+					summary: vapiResult.summary,
 				}),
 			},
 		);
 
 		if (!response.ok) {
-			throw createBalboaError(
-				`Failed to submit VAPI result: ${response.statusText}`,
-				"API_ERROR",
-			);
+			throw new BalboaError("Failed to submit VAPI result to backend");
 		}
 	}
 
 	/**
-	 * Wait for verification completion with polling
+	 * Poll for verification completion
 	 */
 	private async waitForCompletion(
 		sessionId: string,
-		options: VerificationOptions,
+		timeout: number,
+		retries: number,
 	): Promise<VerificationResult> {
-		const maxAttempts = 30; // 30 seconds max
-		const timeout = options.timeout || this.config.timeout || 30000;
-		const startTime = Date.now();
+		const maxAttempts = retries + 1;
 		let attempts = 0;
+		const startTime = Date.now();
 
 		while (attempts < maxAttempts && Date.now() - startTime < timeout) {
 			try {
 				const response = await this.makeRequest(
 					`/api/verify/${sessionId}/status`,
 				);
-				const data: VerificationSession = await response.json();
+				const data = await response.json();
 
 				if (data.status === "completed") {
-					if (!data.result) {
-						throw createBalboaError(
-							"Verification completed but no result provided",
-							"API_ERROR",
+					if (data.verified === undefined || data.confidence === undefined) {
+						throw new BalboaError(
+							"Backend returned incomplete verification result",
 						);
 					}
-					return data.result;
+					return {
+						success: true,
+						verified: data.verified,
+						confidence: data.confidence,
+						sessionId: sessionId,
+						details: data.details,
+					};
 				}
 
 				if (data.status === "failed") {
-					throw createBalboaError(
-						data.error || "Verification failed",
-						"VERIFICATION_FAILED",
-					);
+					throw new BalboaError(data.error || "Verification failed by backend");
 				}
 
-				// Wait before next poll (exponential backoff)
+				// Wait before next attempt
 				const delay = Math.min(1000 * 1.5 ** attempts, 5000);
 				await this.sleep(delay);
 				attempts++;
 			} catch (error) {
-				if (attempts >= maxAttempts - 1) {
+				if (attempts === maxAttempts - 1) {
 					throw error;
 				}
-				// Retry on network errors
-				await this.sleep(1000);
 				attempts++;
+				await this.sleep(1000);
 			}
 		}
 
-		throw createBalboaError("Verification timeout", "TIMEOUT");
+		throw new BalboaError("Verification timeout");
 	}
 
 	/**
@@ -195,45 +195,27 @@ export class BalboaClient {
 
 				// Don't retry on client errors (4xx)
 				if (response.status >= 400 && response.status < 500) {
-					throw createBalboaError(
-						`API error: ${response.status} ${response.statusText}`,
-						"API_ERROR",
+					throw new BalboaError(
+						`API error: ${response.status} - ${response.statusText}`,
 					);
 				}
 
 				// Retry on server errors (5xx)
-				if (attempt < maxRetries) {
-					const delay = 1000 * 2 ** attempt; // Exponential backoff
-					await this.sleep(delay);
-					continue;
-				}
-
-				throw createBalboaError(
-					`API error: ${response.status} ${response.statusText}`,
-					"API_ERROR",
+				lastError = new BalboaError(
+					`API error: ${response.status} - ${response.statusText}`,
 				);
 			} catch (error) {
 				lastError = error instanceof Error ? error : new Error(String(error));
+			}
 
-				if (attempt < maxRetries) {
-					const delay = 1000 * 2 ** attempt;
-					await this.sleep(delay);
-				}
+			// Wait before retry
+			if (attempt < maxRetries) {
+				const delay = Math.min(1000 * 2 ** attempt, 10000);
+				await this.sleep(delay);
 			}
 		}
 
-		throw createBalboaError(
-			`Network error after ${maxRetries} retries: ${lastError?.message}`,
-			"NETWORK_ERROR",
-			lastError || undefined,
-		);
-	}
-
-	/**
-	 * Sleep utility function
-	 */
-	private sleep(ms: number): Promise<void> {
-		return new Promise((resolve) => setTimeout(resolve, ms));
+		throw lastError || new BalboaError("Request failed after retries");
 	}
 
 	/**
@@ -241,10 +223,10 @@ export class BalboaClient {
 	 */
 	private validateConfig(config: BalboaConfig): void {
 		if (!config.baseUrl) {
-			throw createBalboaError("Base URL is required", "INVALID_CONFIG");
+			throw new BalboaError("Base URL is required", "INVALID_CONFIG");
 		}
 		if (!config.baseUrl.startsWith("http")) {
-			throw createBalboaError(
+			throw new BalboaError(
 				"Base URL must start with http:// or https://",
 				"INVALID_CONFIG",
 			);
@@ -258,18 +240,23 @@ export class BalboaClient {
 		if (error instanceof BalboaError) {
 			return error;
 		}
-
-		if (error instanceof Error) {
-			return createBalboaError(
-				`Verification failed: ${error.message}`,
-				"VERIFICATION_FAILED",
-				error,
-			);
-		}
-
-		return createBalboaError(
-			"An unknown error occurred during verification",
-			"VERIFICATION_FAILED",
+		return new BalboaError(
+			error instanceof Error ? error.message : "Unknown error",
+			"UNKNOWN_ERROR",
+			error instanceof Error ? error : undefined,
 		);
+	}
+
+	/**
+	 * Sleep utility
+	 */
+	private sleep(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
+}
+	 * Sleep utility
+	 */
+	private sleep(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 }

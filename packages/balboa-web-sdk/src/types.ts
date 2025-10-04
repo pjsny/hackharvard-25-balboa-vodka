@@ -1,5 +1,5 @@
 /**
- * Configuration options for the Balboa SDK
+ * Configuration options for the Balboa Web SDK
  */
 export interface BalboaConfig {
 	/** API key for authenticating with Balboa services (optional for development) */
@@ -133,4 +133,30 @@ export interface UseBalboaReturn {
 	result: VerificationResult | null;
 	/** Last error */
 	error: Error | null;
+}
+
+/**
+ * Web verification hook return type
+ */
+export interface UseBalboaVerificationReturn {
+	/** Start verification process */
+	startVerification: (options: VerificationOptions) => void;
+	/** Whether verification is in progress */
+	isLoading: boolean;
+	/** Last verification result */
+	result: VerificationResult | null;
+	/** Last error */
+	error: Error | null;
+	/** Whether dialog is open */
+	isOpen: boolean;
+	/** Current verification options */
+	currentOptions: VerificationOptions | null;
+	/** Handle successful verification */
+	handleSuccess: () => void;
+	/** Handle dialog close */
+	handleClose: () => void;
+	/** Direct verification function */
+	verifyWithBalboa: (
+		options: VerificationOptions,
+	) => Promise<VerificationResult>;
 }

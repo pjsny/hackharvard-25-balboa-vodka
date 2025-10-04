@@ -1,17 +1,13 @@
 // Main SDK exports
 // Default export for convenience
-export { BalboaClient, BalboaClient as default } from "./client";
-export {
-	createBalboaError,
-	ERROR_CODES,
-	getErrorMessage,
-	isBalboaError,
-} from "./errors";
+export { BalboaWebClient, BalboaWebClient as default } from "./client";
 export { useBalboa, verifyWithBalboa } from "./hooks";
+export { useBalboaVerification } from "./hooks/useBalboaVerification";
 // Type exports
 export type {
 	BalboaConfig,
 	UseBalboaReturn,
+	UseBalboaVerificationReturn,
 	VapiCallResult,
 	VerificationDetails,
 	VerificationOptions,

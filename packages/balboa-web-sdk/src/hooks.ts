@@ -1,5 +1,7 @@
+"use client";
+
 import { useCallback, useState } from "react";
-import { BalboaClient } from "./client";
+import { BalboaWebClient } from "./client";
 import type {
 	BalboaConfig,
 	UseBalboaReturn,
@@ -34,7 +36,7 @@ export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 					environment: "production",
 				};
 
-				const client = new BalboaClient(clientConfig);
+				const client = new BalboaWebClient(clientConfig);
 
 				// Add progress callback
 				const optionsWithProgress = {
@@ -88,6 +90,6 @@ export async function verifyWithBalboa(
 		environment: "production",
 	};
 
-	const client = new BalboaClient(clientConfig);
+	const client = new BalboaWebClient(clientConfig);
 	return client.verifyWithBalboa(options);
 }
