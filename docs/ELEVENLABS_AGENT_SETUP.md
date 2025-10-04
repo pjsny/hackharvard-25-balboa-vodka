@@ -4,9 +4,22 @@
 
 This guide shows you how to configure your ElevenLabs agent to:
 1. **Receive dynamic variables** (email, question) from the frontend
-2. **Ask the verification question**
-3. **Capture the user's answer**
-4. **Send email + answer to your webhook**
+2. **Accept first message overrides** (LLM-generated opening messages)
+3. **Ask the verification question**
+4. **Capture the user's answer**
+5. **Send email + answer to your webhook**
+
+## ⚠️ CRITICAL: Enable Overrides in Security Settings
+
+**Before anything else, you MUST enable overrides in your ElevenLabs agent:**
+
+1. Go to your agent's **Settings** → **Security** tab
+2. Enable the following overrides:
+   - ✅ **First Message** (Required for LLM-generated opening messages)
+   - ✅ **Dynamic Variables** (Required for passing email/question)
+3. Save the settings
+
+**Without these enabled, the overrides will be ignored and the agent will use its default first message!**
 
 ## Step 1: Create Dynamic Variables in Agent Prompt
 

@@ -26,8 +26,8 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 		onDisconnect: () => {
 			console.log('❌ ElevenLabs conversation disconnected');
 			console.log('📊 Final state:', state);
-			setState(prev => ({ 
-				...prev, 
+			setState(prev => ({
+				...prev,
 				isActive: false,
 				result: prev.result ? {
 					...prev.result,
@@ -43,7 +43,7 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 				timestamp: new Date().toISOString(),
 				fullMessage: message
 			});
-			
+
 			// Store messages for transcript
 			if (message.type === 'user' && message.content) {
 				console.log('👤 User message:', message.content);
@@ -74,9 +74,9 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 				name: error.name,
 				fullError: error
 			});
-			setState(prev => ({ 
-				...prev, 
-				isActive: false, 
+			setState(prev => ({
+				...prev,
+				isActive: false,
 				error: createBalboaError(
 					`ElevenLabs conversation error: ${error.message || error}`,
 					"ELEVENLABS_ERROR",
@@ -115,7 +115,7 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 				customVariables,
 				timestamp: new Date().toISOString()
 			});
-			
+
 			try {
 				// Initialize result state
 				const startTime = Date.now();
@@ -127,7 +127,7 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 					duration: 0,
 					startTime,
 				};
-				
+
 				console.log('📊 Initial result state:', initialResult);
 				setState({ isActive: true, result: initialResult, error: null });
 
@@ -138,8 +138,8 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 					audioTracks: mediaStream.getAudioTracks().length,
 					trackSettings: mediaStream.getAudioTracks()[0]?.getSettings()
 				});
-				
-				// Start the conversation session with provided options and custom variables
+
+				// Start the conversation session with provided options
 				const sessionConfig = {
 					...sessionOptions,
 					userId: sessionId,
@@ -151,12 +151,14 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 						}
 					})
 				};
-				
+
 				console.log('🎯 Starting conversation session with config:', sessionConfig);
+				console.log('🎤 First message override:', sessionConfig.conversationConfigOverride?.agent?.firstMessage || 'NONE - using agent default');
+				console.log('📊 Full session config:', JSON.stringify(sessionConfig, null, 2));
 				console.log('📊 Conversation object before startSession:', conversation);
-				
+
 				const conversationId = await conversation.startSession(sessionConfig);
-				
+
 				console.log('✅ Conversation session started:', {
 					conversationId,
 					timestamp: new Date().toISOString(),
@@ -166,7 +168,7 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 				// Update result with conversation ID
 				const resultWithId = { ...initialResult, callId: conversationId };
 				setState(prev => ({ ...prev, result: resultWithId }));
-				
+
 				console.log('📊 Updated result state:', resultWithId);
 
 				// Don't return immediately - let the conversation run
@@ -180,7 +182,7 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 					name: error instanceof Error ? error.name : undefined,
 					fullError: error
 				});
-				
+
 				const balboaError = createBalboaError(
 					`Failed to start ElevenLabs conversation: ${getErrorMessage(error)}`,
 					"ELEVENLABS_ERROR",
@@ -196,7 +198,7 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 	const stopVerification = useCallback(async () => {
 		console.log('🛑 Stopping ElevenLabs verification...');
 		console.log('📊 Current state before stop:', state);
-		
+
 		try {
 			if (conversation) {
 				console.log('📊 Conversation object before endSession:', conversation);

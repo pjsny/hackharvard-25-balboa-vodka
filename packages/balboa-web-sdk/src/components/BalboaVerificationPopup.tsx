@@ -445,25 +445,33 @@ export const BalboaVerificationPopup = ({
         agentId: elevenLabsConfig.agentId,
         connectionType: 'websocket' as const,
         userId: sessionId,
-        // Override the agent's first message
-        firstMessage: firstMessage,
+        conversationConfigOverride: {
+          agent: {
+            firstMessage: firstMessage
+          }
+        },
         // Inject dynamic variables into the conversation
         // These variables are accessible in the agent's prompt using {{variable_name}}
         dynamicVariables: {
           user_email: email || '',
           verification_question: question || 'Please verify your identity',
-          session_id: sessionId,
-          timestamp: new Date().toISOString()
         }
       };
 
-      console.log('🚀 Starting verification with dynamic variables:', {
+      console.log('🚀 Starting verification with config override:', {
         email: email || '',
         question: question || 'Please verify your identity',
         firstMessage,
         sessionId,
-        customVariables
+        customVariables,
+        override: sessionOptions.conversationConfigOverride,
+        dynamicVariables: sessionOptions.dynamicVariables
       });
+
+      console.log('📧 User email passed to ElevenLabs:', email || 'NONE');
+      console.log('🔑 Dynamic variables:', sessionOptions.dynamicVariables);
+
+      console.log('📧 User email passed to ElevenLabs:', email || 'NONE');
 
       await startVerification(sessionId, sessionOptions, customVariables);
     } catch (error) {

@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { agentId } = await request.json();
-    
+
     console.log('Received agentId:', agentId);
     console.log('API Key exists:', !!process.env.ELEVENLABS_API_KEY);
-    
+
     if (!agentId) {
       return NextResponse.json({ error: 'Agent ID is required' }, { status: 400 });
     }
@@ -28,25 +28,25 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const error = await response.text();
       console.error('ElevenLabs API error:', error);
-      return NextResponse.json({ 
-        error: 'Failed to create conversation token', 
+      return NextResponse.json({
+        error: 'Failed to create conversation token',
         details: error,
-        status: response.status 
+        status: response.status
       }, { status: 500 });
     }
 
     const data = await response.json();
     console.log('ElevenLabs API success:', data);
     console.log('Available fields:', Object.keys(data));
-    return NextResponse.json({ 
+    return NextResponse.json({
       conversationToken: data.token || data.conversation_token || data.access_token,
-      fullResponse: data 
+      fullResponse: data
     });
   } catch (error) {
     console.error('Error generating conversation token:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
