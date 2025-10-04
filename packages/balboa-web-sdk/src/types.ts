@@ -12,6 +12,8 @@ export interface BalboaConfig {
 	timeout?: number;
 	/** Number of retry attempts */
 	retries?: number;
+	/** ElevenLabs Agent ID for voice conversations */
+	agentId?: string;
 }
 
 /**
@@ -141,4 +143,20 @@ export interface UseBalboaVerificationReturn {
 	verifyWithBalboa: (
 		options: VerificationOptions,
 	) => Promise<VerificationResult>;
+}
+
+/**
+ * Result of ElevenLabs voice call
+ */
+export interface ElevenLabsCallResult {
+	/** Unique call/conversation ID */
+	callId: string;
+	/** Audio recording data (base64 or URL) */
+	recording: string;
+	/** Transcript of the conversation */
+	transcript: string;
+	/** Summary of the conversation */
+	summary: string;
+	/** Duration of the call in seconds */
+	duration: number;
 }

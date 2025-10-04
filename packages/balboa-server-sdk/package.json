@@ -43,7 +43,9 @@
 		"typescript",
 		"backend",
 		"server",
-		"balboa"
+		"balboa",
+		"elevenlabs",
+		"sdk"
 	],
 	"author": "Balboa Team",
 	"license": "MIT"

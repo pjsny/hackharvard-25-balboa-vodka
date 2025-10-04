@@ -53,34 +53,28 @@ export const authOptions: NextAuthOptions = {
           // Clear the OTP from Redis
           await redis.del(`otp:${credentials.email}`);
 
-          // Get or create user in database
-          let user;
-          const existingUser = await db.select().from(users).where(eq(users.email, credentials.email)).limit(1);
-          
-          if (existingUser.length === 0) {
-            // Create new user
-            const newUser = await db.insert(users).values({
-              email: credentials.email,
-              name: credentials.email.split("@")[0],
-            }).returning();
-            user = newUser[0];
-            console.log("Created new user:", user.id);
-          } else {
-            // Update existing user
-            const updatedUser = await db.update(users)
-              .set({ 
-                updatedAt: new Date()
-              })
-              .where(eq(users.email, credentials.email))
-              .returning();
-            user = updatedUser[0];
-            console.log("Updated existing user:", user.id);
+          // Upsert user in database (insert or update)
+          const [user] = await db.insert(users).values({
+            email: credentials.email,
+            name: credentials.email.split("@")[0],
+          }).onConflictDoUpdate({
+            target: users.email,
+            set: {
+              updatedAt: new Date(),
+            }
+          }).returning();
+
+          if (!user) {
+            console.error("Failed to upsert user");
+            return null;
           }
 
+          console.log("Upserted user:", user.id);
+
           const result = {
-            id: user!.id,
-            email: user!.email,
-            name: user!.name || credentials.email.split("@")[0],
+            id: user.id,
+            email: user.email,
+            name: user.name || credentials.email.split("@")[0],
           };
           
           console.log("Returning user:", result);

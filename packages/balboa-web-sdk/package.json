@@ -29,6 +29,7 @@
 		"react-dom": "^19"
 	},
 	"dependencies": {
+		"@elevenlabs/react": "^0.7.1",
 		"@radix-ui/react-dialog": "^1.1.15",
 		"@stitches/react": "^1.2.8",
 		"clsx": "^2.1.1",

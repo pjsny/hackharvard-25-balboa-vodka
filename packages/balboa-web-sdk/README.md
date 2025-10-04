@@ -1,130 +1,190 @@
-# Balboa Web SDK
+# @balboa/sdk
 
-A React SDK for voice verification and fraud prevention in web applications.
+Balboa Voice Verification SDK for e-commerce fraud prevention.
 
 ## Installation
 
 ```bash
-npm install @balboa/web
+npm install @balboa/sdk
+# or
+yarn add @balboa/sdk
+# or
+pnpm add @balboa/sdk
 ```
 
-## Setup
+## Quick Start
 
-**No additional setup required!**
+### Basic Usage
 
-The SDK uses Stitches (CSS-in-JS) for styling, which means:
-- ✅ No CSS imports needed
-- ✅ No Tailwind configuration required
-- ✅ Works in any React app out of the box
-- ✅ Zero runtime overhead
-- ✅ Type-safe styles
+```typescript
+import { BalboaClient } from '@balboa/sdk'
 
-## Usage
+const client = new BalboaClient({
+  apiKey: 'your-api-key',
+  baseUrl: 'https://api.balboa.vodka'
+})
 
-### Basic Voice Verification
+const result = await client.verifyWithBalboa({
+  transactionId: 'txn_123',
+  customerData: { email: 'user@example.com' },
+  riskLevel: 75
+})
 
-```tsx
-import { VoiceVerificationDialog } from '@balboa/web';
-
-function App() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <VoiceVerificationDialog
-      isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
-      onSuccess={() => {
-        console.log('Verification successful!');
-        setIsOpen(false);
-      }}
-      email="user@example.com"
-    />
-  );
+if (result.success && result.verified) {
+  // Proceed with payment
+  console.log('Verification successful!')
 }
 ```
 
-### Using the Hook
+### React Integration
 
-```tsx
-import { useBalboaVerification } from '@balboa/web';
+```typescript
+import { useBalboa } from '@balboa/sdk'
 
-function CheckoutPage() {
-  const { 
-    isVerifying, 
-    result, 
-    error, 
-    startVerification 
-  } = useBalboaVerification({
-    email: "user@example.com"
-  });
+function CheckoutComponent() {
+  const { verifyWithBalboa, isLoading, result, error } = useBalboa()
+
+  const handleVerification = async () => {
+    try {
+      const result = await verifyWithBalboa({
+        transactionId: generateTransactionId(),
+        customerData: checkoutData
+      })
+
+      if (result.success && result.verified) {
+        await processPayment()
+      }
+    } catch (error) {
+      console.error('Verification failed:', error)
+    }
+  }
 
   return (
-    <div>
-      <button onClick={startVerification} disabled={isVerifying}>
-        {isVerifying ? 'Verifying...' : 'Verify with Voice'}
-      </button>
-
-      {result?.verified && (
-        <div className="text-green-600">
-          Verification successful!
-        </div>
-      )}
-
-      {error && (
-        <div className="text-red-600">
-          Verification failed: {error.message}
-        </div>
-      )}
-    </div>
-  );
+    <button onClick={handleVerification} disabled={isLoading}>
+      {isLoading ? 'Verifying...' : 'Start Verification'}
+    </button>
+  )
 }
 ```
 
-## Components
+### Simple Function API
 
-### VoiceVerificationDialog
+```typescript
+import { verifyWithBalboa } from '@balboa/sdk'
 
-A complete modal dialog for voice verification with built-in UI states:
-
-- **Green indicator**: User is speaking
-- **Orange indicator**: Assistant is thinking/processing
-- **Red indicator**: Call has ended
-- **Automatic call termination**: When modal is closed
-
-Props:
-- `isOpen`: boolean - Controls modal visibility
-- `onClose`: () => void - Called when modal is closed
-- `onSuccess`: () => void - Called when verification succeeds
-- `email`: string - Customer's email address for verification
-
-## Styling
-
-The SDK uses **Stitches** (CSS-in-JS) for styling, which provides:
-
-- **Zero runtime overhead**: Styles are generated at build time
-- **Type safety**: All styles are type-checked
-- **No configuration**: Works in any React app without setup
-- **Tree shaking**: Only used styles are included in the bundle
-- **Theme support**: Built-in design system with consistent colors and spacing
-
-### Customization
-
-You can customize the appearance by passing custom styles to the components:
-
-```tsx
-<VoiceVerificationDialog
-  // ... other props
-  style={{
-    '--balboa-primary': '#your-brand-color',
-    '--balboa-radius': '8px',
-  }}
-/>
+const result = await verifyWithBalboa({
+  transactionId: 'txn_123',
+  customerData: { email: 'user@example.com' }
+})
 ```
 
-### Build Issues
+## Configuration
 
-If you encounter build issues:
+### BalboaConfig
 
-1. Make sure all peer dependencies are installed
-2. Check that your React version is compatible (^19)
-3. Ensure TypeScript is properly configured
+```typescript
+interface BalboaConfig {
+  apiKey: string              // Required: Your Balboa API key
+  baseUrl: string             // Required: Balboa API base URL
+  environment?: 'sandbox' | 'production'  // Default: 'production'
+  timeout?: number            // Default: 30000ms
+  retries?: number            // Default: 3
+}
+```
+
+### VerificationOptions
+
+```typescript
+interface VerificationOptions {
+  transactionId: string       // Required: Unique transaction ID
+  customerData: object        // Required: Customer/checkout data
+  riskLevel?: number          // Optional: Risk score (0-100)
+  timeout?: number           // Optional: Custom timeout
+  retries?: number           // Optional: Custom retry count
+  onProgress?: (status) => void  // Optional: Progress callback
+}
+```
+
+## API Reference
+
+### BalboaClient
+
+#### `verifyWithBalboa(options: VerificationOptions): Promise<VerificationResult>`
+
+Main verification function that handles the entire voice verification flow.
+
+**Returns:**
+```typescript
+interface VerificationResult {
+  success: boolean           // Whether verification completed successfully
+  verified: boolean          // Whether voice was verified
+  confidence: number         // Confidence score (0.0-1.0)
+  sessionId: string          // Verification session ID
+  details?: VerificationDetails  // Additional verification details
+}
+```
+
+### React Hook
+
+#### `useBalboa(config?: BalboaConfig): UseBalboaReturn`
+
+React hook for managing verification state.
+
+**Returns:**
+```typescript
+interface UseBalboaReturn {
+  verifyWithBalboa: (options: VerificationOptions) => Promise<VerificationResult>
+  isLoading: boolean         // Whether verification is in progress
+  result: VerificationResult | null  // Last verification result
+  error: Error | null        // Last error
+}
+```
+
+## Error Handling
+
+The SDK throws `BalboaError` instances for different failure scenarios:
+
+```typescript
+import { BalboaError, ERROR_CODES } from '@balboa/sdk'
+
+try {
+  const result = await client.verifyWithBalboa(options)
+} catch (error) {
+  if (error instanceof BalboaError) {
+    switch (error.code) {
+      case ERROR_CODES.MICROPHONE_DENIED:
+        // Handle microphone permission denied
+        break
+      case ERROR_CODES.VERIFICATION_FAILED:
+        // Handle verification failure
+        break
+      case ERROR_CODES.TIMEOUT:
+        // Handle timeout
+        break
+      case ERROR_CODES.API_ERROR:
+        // Handle API errors
+        break
+    }
+  }
+}
+```
+
+## Browser Compatibility
+
+- **Modern Browsers**: Chrome 80+, Firefox 75+, Safari 13+, Edge 80+
+- **Mobile Support**: iOS Safari 13+, Chrome Mobile 80+
+- **WebRTC Required**: For VAPI voice functionality
+- **HTTPS Required**: For microphone access in production
+
+## Environment Variables
+
+For React applications, you can set these environment variables:
+
+```bash
+NEXT_PUBLIC_BALBOA_API_KEY=your-api-key
+NEXT_PUBLIC_BALBOA_API_URL=https://api.balboa.vodka
+```
+
+## License
+
+MIT
