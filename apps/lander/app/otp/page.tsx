@@ -48,6 +48,13 @@ export default function OTPScreen() {
     setTimeLeft(300);
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    const cleanData = pastedData.replace(/\D/g, '').slice(0, 6);
+    setOtp(cleanData);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -150,6 +157,7 @@ export default function OTPScreen() {
                 placeholder="000000"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onPaste={handlePaste}
                 className="text-center text-2xl font-mono bg-white/10 border-white/30 text-white placeholder:text-white/60 focus:border-white/60 focus:ring-white/20 tracking-widest"
                 maxLength={6}
                 required

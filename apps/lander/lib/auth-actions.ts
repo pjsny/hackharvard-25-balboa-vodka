@@ -1,18 +1,15 @@
 /**
- * Server Actions for Authentication and Email OTP
- * 
- * This file contains the specifications for server actions that will handle:
- * 1. Email OTP sending
- * 2. OTP verification
- * 3. User session management
- * 
- * TODO: Implement these actions with proper error handling and security measures
+ * Authentication server actions for email OTP and session management
  */
 
 "use server";
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { Redis } from '@upstash/redis';
+
+// Initialize Redis
+const redis = Redis.fromEnv();
 
 // Types for our auth system
 export interface SendOTPResult {
@@ -41,18 +38,8 @@ export interface AuthSession {
 
 /**
  * Send OTP to user's email
- * 
- * @param email - User's email address
+ * @param email User's email address
  * @returns Promise<SendOTPResult>
- * 
- * Implementation should:
- * 1. Validate email format
- * 2. Check if email is already registered
- * 3. Generate 6-digit OTP
- * 4. Store OTP in database/cache with expiration (5 minutes)
- * 5. Send email via email service (SendGrid, Resend, etc.)
- * 6. Rate limit to prevent spam
- * 7. Return success/error response
  */
 export async function sendOTP(email: string): Promise<SendOTPResult> {
   try {
@@ -71,9 +58,8 @@ export async function sendOTP(email: string): Promise<SendOTPResult> {
     // TODO: Generate secure 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // TODO: Store OTP in database/cache with expiration
-    // Example: await redis.setex(`otp:${email}`, 300, otp); // 5 minutes
-    
+    const result = await redis.setex(`otp:${email}`, 300, otp);
+
     // TODO: Send email via email service
     // Example with Resend:
     // await resend.emails.send({
@@ -101,20 +87,9 @@ export async function sendOTP(email: string): Promise<SendOTPResult> {
 
 /**
  * Verify OTP and create user session
- * 
- * @param email - User's email address
- * @param otp - 6-digit verification code
+ * @param email User's email address
+ * @param otp 6-digit verification code
  * @returns Promise<VerifyOTPResult>
- * 
- * Implementation should:
- * 1. Validate OTP format
- * 2. Check OTP against stored value
- * 3. Verify OTP hasn't expired
- * 4. Create or update user record
- * 5. Generate secure session token
- * 6. Set secure HTTP-only cookie
- * 7. Clean up used OTP
- * 8. Return success/error response
  */
 export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPResult> {
   try {
@@ -128,16 +103,16 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
     }
 
     // TODO: Retrieve stored OTP from database/cache
-    // const storedOTP = await redis.get(`otp:${email}`);
+    const storedOTP = await redis.get(`otp:${email}`);
     
     // TODO: Verify OTP matches and hasn't expired
-    // if (!storedOTP || storedOTP !== otp) {
-    //   return {
-    //     success: false,
-    //     message: "Invalid or expired verification code",
-    //     error: "INVALID_OTP"
-    //   };
-    // }
+    if (!storedOTP || storedOTP !== otp) {
+      return {
+        success: false,
+        message: "Invalid or expired verification code",
+        error: "INVALID_OTP"
+      };
+    }
 
     // TODO: Create or update user in database
     // const user = await createOrUpdateUser({
@@ -183,15 +158,8 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
 
 /**
  * Resend OTP to user's email
- * 
- * @param email - User's email address
+ * @param email User's email address
  * @returns Promise<SendOTPResult>
- * 
- * Implementation should:
- * 1. Check rate limiting (prevent spam)
- * 2. Invalidate previous OTP
- * 3. Generate new OTP
- * 4. Send new email
  */
 export async function resendOTP(email: string): Promise<SendOTPResult> {
   try {
@@ -225,14 +193,7 @@ export async function resendOTP(email: string): Promise<SendOTPResult> {
 
 /**
  * Get current user session
- * 
  * @returns Promise<AuthSession | null>
- * 
- * Implementation should:
- * 1. Read session cookie
- * 2. Verify session token
- * 3. Check if session is expired
- * 4. Return user session or null
  */
 export async function getSession(): Promise<AuthSession | null> {
   try {
@@ -257,13 +218,7 @@ export async function getSession(): Promise<AuthSession | null> {
 
 /**
  * Sign out user
- * 
  * @returns Promise<void>
- * 
- * Implementation should:
- * 1. Clear session cookie
- * 2. Invalidate session token in database/cache
- * 3. Redirect to home page
  */
 export async function signOut(): Promise<void> {
   try {
@@ -285,9 +240,8 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Email template for OTP
- * 
- * @param otp - 6-digit verification code
+ * Generate HTML email template for OTP
+ * @param otp 6-digit verification code
  * @returns HTML email template
  */
 function generateOTPEmailHTML(otp: string): string {
@@ -332,24 +286,13 @@ function generateOTPEmailHTML(otp: string): string {
 }
 
 /**
- * Simple test server action
+ * Test server action
  */
 export async function testAction(): Promise<void> {
   console.log("sup");
 }
 
 /**
- * Environment Variables Required:
- * 
- * DATABASE_URL - Database connection string
- * REDIS_URL - Redis connection string for caching
- * EMAIL_SERVICE_API_KEY - API key for email service (Resend, SendGrid, etc.)
- * JWT_SECRET - Secret key for JWT tokens
- * NEXTAUTH_SECRET - Secret for NextAuth (if using)
- * 
- * Optional:
- * EMAIL_FROM - From email address (default: noreply@balboa.dev)
- * RATE_LIMIT_WINDOW - Rate limit window in seconds (default: 60)
- * OTP_EXPIRY - OTP expiry time in seconds (default: 300)
- * SESSION_EXPIRY - Session expiry time in seconds (default: 604800)
+ * Required env vars: DATABASE_URL, REDIS_URL, EMAIL_SERVICE_API_KEY, JWT_SECRET
+ * Optional: EMAIL_FROM, RATE_LIMIT_WINDOW, OTP_EXPIRY, SESSION_EXPIRY
  */
