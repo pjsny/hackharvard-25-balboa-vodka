@@ -96,7 +96,6 @@ Props:
 - `onClose`: () => void - Called when modal is closed
 - `onSuccess`: () => void - Called when verification succeeds
 - `email`: string - Customer's email address for verification
-- `riskLevel?`: number - Risk threshold (default: 75)
 
 ## Styling
 

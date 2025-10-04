@@ -2,7 +2,7 @@ import type {
 	BalboaServerConfig,
 	CreateVerificationRequest,
 	CreateVerificationResponse,
-	SubmitVapiResultRequest,
+	SubmitElevenLabsResultRequest,
 	VerificationSession,
 	VerificationStatusResponse,
 } from "./types";
@@ -12,11 +12,8 @@ import { BalboaServerError } from "./types";
  * Balboa Server SDK Client - Calls your backend API
  */
 export class BalboaServerClient {
-	private config: BalboaServerConfig;
-
-	constructor(config: BalboaServerConfig) {
-		this.config = config;
-		this.validateConfig(config);
+	constructor() {
+		// No configuration needed for now
 	}
 
 	/**
@@ -54,24 +51,24 @@ export class BalboaServerClient {
 	}
 
 	/**
-	 * Submit VAPI result to your backend
+	 * Submit ElevenLabs result to your backend
 	 */
-	async submitVapiResult(
+	async submitElevenLabsResult(
 		sessionId: string,
-		vapiResult: SubmitVapiResultRequest,
+		elevenLabsResult: SubmitElevenLabsResultRequest,
 	): Promise<{ success: boolean }> {
 		try {
 			const response = await this.makeRequest(
-				`/api/verify/${sessionId}/vapi-result`,
+				`/api/verify/${sessionId}/elevenlabs-result`,
 				{
 					method: "POST",
-					body: JSON.stringify(vapiResult),
+					body: JSON.stringify(elevenLabsResult),
 				},
 			);
 
 			return response.json();
 		} catch (error) {
-			throw this.handleError(error, "Failed to submit VAPI result");
+			throw this.handleError(error, "Failed to submit ElevenLabs result");
 		}
 	}
 
@@ -109,21 +106,19 @@ export class BalboaServerClient {
 		endpoint: string,
 		options: RequestInit = {},
 	): Promise<Response> {
-		const url = `${this.config.baseUrl}${endpoint}`;
+		const baseUrl = "http://localhost:3000";
+		const url = `${baseUrl}${endpoint}`;
 
 		const requestOptions: RequestInit = {
 			headers: {
 				"Content-Type": "application/json",
-				...(this.config.apiKey && {
-					Authorization: `Bearer ${this.config.apiKey}`,
-				}),
 				...options.headers,
 			},
 			...options,
 		};
 
 		let lastError: Error | null = null;
-		const maxRetries = this.config.retries || 3;
+		const maxRetries = 3;
 
 		for (let attempt = 0; attempt <= maxRetries; attempt++) {
 			try {
@@ -162,20 +157,6 @@ export class BalboaServerClient {
 		throw lastError || new BalboaServerError("Request failed after retries");
 	}
 
-	/**
-	 * Validate configuration
-	 */
-	private validateConfig(config: BalboaServerConfig): void {
-		if (!config.baseUrl) {
-			throw new BalboaServerError("Base URL is required", "INVALID_CONFIG");
-		}
-		if (!config.baseUrl.startsWith("http")) {
-			throw new BalboaServerError(
-				"Base URL must start with http:// or https://",
-				"INVALID_CONFIG",
-			);
-		}
-	}
 
 	/**
 	 * Handle and transform errors

@@ -1,6 +1,6 @@
 import { Dialog } from "@radix-ui/react-dialog";
 import { CheckCircle, Mic, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BalboaElevenLabsClient } from "../elevenlabs-client";
 import { Button } from "./styled/Button";
 import {
@@ -34,7 +34,6 @@ interface VoiceVerificationDialogProps {
 	onClose: () => void;
 	onSuccess: () => void;
 	email: string;
-	riskLevel?: number;
 }
 
 export function VoiceVerificationDialog({
@@ -42,7 +41,6 @@ export function VoiceVerificationDialog({
 	onClose,
 	onSuccess,
 	email,
-	riskLevel = 75,
 }: VoiceVerificationDialogProps) {
 	const [isVerifying, setIsVerifying] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -50,31 +48,37 @@ export function VoiceVerificationDialog({
 	const [error, setError] = useState<any>(null);
 	const [elevenLabsClient, setElevenLabsClient] =
 		useState<BalboaElevenLabsClient | null>(null);
+	const elevenLabsClientRef = useRef<BalboaElevenLabsClient | null>(null);
 	const [callStatus, setCallStatus] = useState<
 		"idle" | "user-speaking" | "llm-thinking" | "call-ended"
 	>("idle");
 	const [isUserSpeaking, setIsUserSpeaking] = useState(false);
 	const [isLlmThinking, setIsLlmThinking] = useState(false);
 
-	// Cleanup ElevenLabs client when component unmounts or dialog closes
+	// Update ref when client changes
+	useEffect(() => {
+		elevenLabsClientRef.current = elevenLabsClient;
+	}, [elevenLabsClient]);
+
+	// Cleanup ElevenLabs client when component unmounts
 	useEffect(() => {
 		return () => {
-			if (elevenLabsClient) {
-				elevenLabsClient.stopConversation();
+			if (elevenLabsClientRef.current) {
+				elevenLabsClientRef.current.stopConversation();
 			}
 		};
-	}, [elevenLabsClient]);
+	}, []); // Empty dependency array - only run on unmount
 
 	// Cleanup when dialog closes - always end the call
 	useEffect(() => {
-		if (!isOpen && elevenLabsClient) {
-			elevenLabsClient.stopConversation();
+		if (!isOpen && elevenLabsClientRef.current) {
+			elevenLabsClientRef.current.stopConversation();
 			setCallStatus("call-ended");
 			setIsVerifying(false);
 			setIsUserSpeaking(false);
 			setIsLlmThinking(false);
 		}
-	}, [isOpen, elevenLabsClient]);
+	}, [isOpen]); // Only depend on isOpen, not elevenLabsClient
 
 	const handleVerification = async () => {
 		setIsLoading(true);
@@ -143,7 +147,7 @@ export function VoiceVerificationDialog({
 					setCallStatus("llm-thinking"); // Initially LLM is thinking
 				});
 
-				client.on("call-end", (callData) => {
+				client.on("call-end", (callData: any) => {
 					console.log("🔚 ElevenLabs conversation ended:", callData);
 					setIsVerifying(false);
 					setCallStatus("call-ended");
@@ -161,7 +165,7 @@ export function VoiceVerificationDialog({
 					}
 				});
 
-				client.on("message", (message) => {
+				client.on("message", (message: any) => {
 					console.log("💬 ElevenLabs message:", message);
 
 					// Handle different message types
@@ -240,8 +244,8 @@ export function VoiceVerificationDialog({
 					}
 				});
 
-				client.on("error", (error) => {
-					console.error("❌ VAPI error:", error);
+				client.on("error", (error: any) => {
+					console.error("❌ Voice verification error:", error);
 					setError(
 						new Error(`Voice verification failed: ${error.message || error}`),
 					);
@@ -274,7 +278,7 @@ export function VoiceVerificationDialog({
 					const startTimeout = setTimeout(() => {
 						if (!isVerifying) {
 							console.warn(
-								"⚠️ VAPI call didn't start within 5 seconds - checking assistant configuration",
+								"⚠️ Voice call didn't start within 5 seconds - checking configuration",
 							);
 							setError(
 								new Error(
@@ -289,7 +293,7 @@ export function VoiceVerificationDialog({
 					const stuckTimeout = setTimeout(() => {
 						if (isVerifying) {
 							console.warn(
-								"⚠️ VAPI call seems stuck - assistant might not be responding",
+								"⚠️ Voice call seems stuck - assistant might not be responding",
 							);
 							setError(
 								new Error(

@@ -1,12 +1,34 @@
 ## Getting Started
 
+### Environment Setup
+
+Before running the application, you need to set up your ElevenLabs configuration:
+
+1. **Get your ElevenLabs API Key:**
+   - Go to [ElevenLabs API Keys](https://elevenlabs.io/app/settings/api-keys)
+   - Create a new API key or copy an existing one
+
+2. **Create an ElevenLabs Agent:**
+   - Go to [ElevenLabs Agents](https://elevenlabs.io/app/agents)
+   - Create a new agent for voice verification
+   - Copy the Agent ID
+
+3. **Set Environment Variables:**
+   Create a `.env.local` file in the `apps/lander` directory:
+   ```bash
+   ELEVENLABS_API_KEY=your_api_key_here
+   ELEVENLABS_AGENT_ID=your_agent_id_here
+   ```
+
+### Running the Application
+
 First, run the development server:
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

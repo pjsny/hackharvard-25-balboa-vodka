@@ -33,13 +33,7 @@ const client = new BalboaServerClient({
 
 // Create verification session
 const session = await client.createVerificationSession({
-  transactionId: "txn_123",
-  customerData: {
-    email: "user@example.com",
-    cardNumber: "4242424242424242",
-    amount: 99.99,
-  },
-  riskLevel: 75,
+  email: "user@example.com",
 });
 
 // Get verification status
@@ -62,9 +56,7 @@ await client.submitVapiResult(session.id, {
 Creates a new verification session by calling your backend.
 
 **Parameters:**
-- `request.transactionId` (string) - Unique transaction identifier
-- `request.customerData` (object) - Customer and transaction data
-- `request.riskLevel` (number, optional) - Pre-calculated risk score (0-100)
+- `request.email` (string) - Customer's email address for verification
 
 **Returns:** `Promise<CreateVerificationResponse>`
 
@@ -138,9 +130,7 @@ Content-Type: application/json
 Authorization: Bearer {apiKey}
 
 {
-  "transactionId": "string",
-  "customerData": "object",
-  "riskLevel": "number"
+  "email": "string"
 }
 
 Response:

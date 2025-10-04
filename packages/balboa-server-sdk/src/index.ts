@@ -7,7 +7,7 @@ export type {
 	BalboaServerError,
 	CreateVerificationRequest,
 	CreateVerificationResponse,
-	SubmitVapiResultRequest,
+	SubmitElevenLabsResultRequest,
 	VerificationDetails,
 	VerificationResult,
 	VerificationSession,
@@ -18,5 +18,5 @@ export type {
 // Zod schemas
 export {
 	CreateVerificationSchema,
-	SubmitVapiResultSchema,
+	SubmitElevenLabsResultSchema,
 } from "./types";

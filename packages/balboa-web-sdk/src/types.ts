@@ -20,8 +20,6 @@ export interface BalboaConfig {
 export interface VerificationOptions {
 	/** Customer's email address for verification */
 	email: string;
-	/** Pre-calculated fraud risk score (0-100) */
-	riskLevel?: number;
 	/** Custom timeout in milliseconds */
 	timeout?: number;
 	/** Number of retry attempts */
@@ -74,9 +72,9 @@ export interface VerificationDetails {
 }
 
 /**
- * VAPI call result data
+ * Voice call result data
  */
-export interface VapiCallResult {
+export interface VoiceCallResult {
 	/** Unique call ID */
 	callId: string;
 	/** Audio recording URL or data */

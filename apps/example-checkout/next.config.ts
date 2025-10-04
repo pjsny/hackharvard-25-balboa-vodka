@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+	transpilePackages: ["@balboa/web", "@balboa/server-sdk"],
 	images: {
 		remotePatterns: [
 			{

@@ -5,7 +5,7 @@ import { z } from "zod";
  */
 export interface BalboaServerConfig {
 	/** Base URL of your Balboa backend API */
-	baseUrl: string;
+	baseUrl?: string;
 	/** API key for authenticating with your backend */
 	apiKey?: string;
 	/** Environment (sandbox or production) */
@@ -25,9 +25,7 @@ export type VerificationStatus = "pending" | "completed" | "failed";
  * Voice Verification Request
  */
 export interface CreateVerificationRequest {
-	transactionId: string;
-	customerData: Record<string, unknown>;
-	riskLevel?: number;
+	email: string;
 }
 
 /**
@@ -62,9 +60,9 @@ export interface VerificationDetails {
 }
 
 /**
- * Submit VAPI Result Request
+ * Submit ElevenLabs Result Request
  */
-export interface SubmitVapiResultRequest {
+export interface SubmitElevenLabsResultRequest {
 	callId: string;
 	recording: string;
 	transcript: string;
@@ -76,15 +74,13 @@ export interface SubmitVapiResultRequest {
  */
 export interface VerificationSession {
 	id: string;
-	transactionId: string;
-	customerData: Record<string, unknown>;
-	riskLevel: number;
+	email: string;
 	status: VerificationStatus;
 	createdAt: string;
 	updatedAt: string;
 	result?: VerificationResult;
 	error?: string;
-	vapiCallId?: string;
+	elevenLabsCallId?: string;
 	recordingUrl?: string;
 	transcript?: string;
 }
@@ -117,12 +113,10 @@ export class BalboaServerError extends Error {
 
 // Zod Schemas for validation
 export const CreateVerificationSchema = z.object({
-	transactionId: z.string().min(1),
-	customerData: z.record(z.unknown()),
-	riskLevel: z.number().min(0).max(100).optional(),
+	email: z.string().email(),
 });
 
-export const SubmitVapiResultSchema = z.object({
+export const SubmitElevenLabsResultSchema = z.object({
 	callId: z.string().min(1),
 	recording: z.string().min(1),
 	transcript: z.string().min(1),

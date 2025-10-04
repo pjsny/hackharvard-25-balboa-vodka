@@ -12,7 +12,7 @@ export type {
 	BalboaConfig,
 	UseBalboaReturn,
 	UseBalboaVerificationReturn,
-	VapiCallResult,
+	VoiceCallResult,
 	VerificationDetails,
 	VerificationOptions,
 	VerificationResult,

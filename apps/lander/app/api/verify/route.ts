@@ -1,31 +1,73 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
-const VerifyEmailSchema = z.object({
-	email: z.string().email(),
-});
+// Simple email validation function
+function isValidEmail(email: string): boolean {
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return emailRegex.test(email);
+}
 
 // Add CORS headers
 const corsHeaders = {
-	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Origin": "http://localhost:3001",
 	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-	"Access-Control-Allow-Headers": "Content-Type, Authorization",
+	"Access-Control-Allow-Headers":
+		"Content-Type, Authorization, X-Requested-With",
+	"Access-Control-Allow-Credentials": "true",
+	"Access-Control-Max-Age": "86400", // 24 hours
 };
 
-export async function OPTIONS() {
-	return new NextResponse(null, { status: 200, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+	// Handle preflight request
+	const origin = request.headers.get("origin");
+
+	// Allow requests from the frontend
+	if (origin === "http://localhost:3001") {
+		return new NextResponse(null, {
+			status: 200,
+			headers: corsHeaders,
+		});
+	}
+
+	// Reject other origins
+	return new NextResponse(null, { status: 403 });
 }
 
 export async function POST(request: NextRequest) {
 	try {
+		// Check origin for CORS
+		const origin = request.headers.get("origin");
+		if (origin !== "http://localhost:3001") {
+			return NextResponse.json(
+				{ error: "CORS policy violation" },
+				{ status: 403, headers: corsHeaders },
+			);
+		}
+
 		const body = await request.json();
-		const { email } = VerifyEmailSchema.parse(body);
+		const { email } = body;
+
+		// Validate email
+		if (!email || typeof email !== "string" || !isValidEmail(email)) {
+			return NextResponse.json(
+				{ error: "Invalid email address" },
+				{ status: 400, headers: corsHeaders },
+			);
+		}
 
 		// Create ElevenLabs Agents Platform session
 		const elevenLabsApiKey = process.env.ELEVENLABS_API_KEY;
+		const elevenLabsAgentId = process.env.ELEVENLABS_AGENT_ID;
 
 		if (!elevenLabsApiKey) {
-			throw new Error("ELEVENLABS_API_KEY not found in environment variables");
+			throw new Error(
+				"ELEVENLABS_API_KEY not found in environment variables. Please set it in your .env.local file.",
+			);
+		}
+
+		if (!elevenLabsAgentId) {
+			throw new Error(
+				"ELEVENLABS_AGENT_ID not found in environment variables. Please set it in your .env.local file.",
+			);
 		}
 
 		// Create ElevenLabs Agents Platform session
@@ -46,7 +88,7 @@ export async function POST(request: NextRequest) {
 		// For now, return the session info
 		// TODO: Replace with actual JWT token generation
 		const secureToken = {
-			agentId: process.env.ELEVENLABS_AGENT_ID || "your-agent-id", // You'll need to create an agent in ElevenLabs dashboard
+			agentId: elevenLabsAgentId,
 			sessionId: sessionId,
 			expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
 			// Include the ElevenLabs API key in the token so the SDK can use it internally

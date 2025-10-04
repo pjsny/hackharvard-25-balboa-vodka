@@ -1,6 +1,6 @@
 "use client";
 
-import { useBalboaVerification, VoiceVerificationDialog } from "@balboa/web";
+import { VoiceVerificationDialog } from "@balboa/web";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,43 +12,31 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
-import type { CartItem, CheckoutData, FraudRisk } from "@/types";
+import type { CartItem, CheckoutData } from "@/types";
 
 export default function Checkout() {
 	const router = useRouter();
 	const { cart, clearCart } = useCart();
-	const [step, setStep] = useState<"form" | "risk-assessment" | "success">(
-		"form",
-	);
+	const [step, setStep] = useState<"form" | "success">("form");
 	const [checkoutData, setCheckoutData] = useState<CheckoutData>({
-		email: "test@test.com",
-		firstName: "test",
-		lastName: "ttest",
-		address: "test",
-		city: "test",
-		state: "test",
-		zipCode: "213123",
-		cardNumber: "123123123123123",
-		expiryDate: "123123",
+		email: "user@example.com",
+		firstName: "John",
+		lastName: "Doe",
+		address: "123 Main St",
+		city: "Cambridge",
+		state: "MA",
+		zipCode: "02138",
+		cardNumber: "4242424242424242",
+		expiryDate: "12/25",
 		cvv: "123",
 	});
-	const [fraudRisk, setFraudRisk] = useState<FraudRisk | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [showVoiceVerification, setShowVoiceVerification] = useState(false);
+	const [verificationSessionId, setVerificationSessionId] = useState<
+		string | null
+	>(null);
 	const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
-
-	const {
-		startVerification,
-		isOpen,
-		currentOptions,
-		handleSuccess,
-		handleClose,
-	} = useBalboaVerification({
-		onSuccess: () => {
-			setPurchasedItems([...cart.items]);
-			setStep("success");
-			clearCart();
-		},
-	});
+	const [error, setError] = useState<string | null>(null);
 
 	// Redirect if cart is empty (but not if we're in success state)
 	useEffect(() => {
@@ -57,57 +45,72 @@ export default function Checkout() {
 		}
 	}, [cart.items.length, router, step]);
 
-	const simulateFraudAssessment = (): FraudRisk => {
-		// Simulate fraud detection based on various factors
-		const riskFactors = [
-			checkoutData.cardNumber.includes("1111"), // Suspicious card pattern
-			checkoutData.email.includes("test"), // Test email
-			cart.total > 500, // High value transaction
-			checkoutData.zipCode === "12345", // Suspicious zip
-		];
-
-		let riskScore = riskFactors.filter(Boolean).length;
-		riskScore += 10000;
-		const isHighRisk = riskScore >= 2;
-
-		return {
-			isHighRisk,
-			riskScore: riskScore * 25, // Convert to percentage
-			reason: isHighRisk
-				? "Multiple risk factors detected"
-				: "Low risk transaction",
-		};
-	};
-
-	const handleFormSubmit = (e: React.FormEvent) => {
+	const handleFormSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsProcessing(true);
+		setError(null);
 
-		// Simulate API call delay
-		setTimeout(() => {
-			const risk = simulateFraudAssessment();
-			setFraudRisk(risk);
+		try {
+			// Create verification session first
+			const verifyResponse = await fetch("/api/verify", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email: checkoutData.email }),
+			});
 
-			if (risk.isHighRisk) {
-				startVerification({
-					transactionId: `txn_${Date.now()}`,
-					customerData: checkoutData as unknown as Record<string, unknown>,
-					riskLevel: risk.riskScore,
-				});
+			const verifyData = await verifyResponse.json();
+
+			if (verifyData.id) {
+				setVerificationSessionId(verifyData.id);
+				setShowVoiceVerification(true);
 			} else {
+				setError("Failed to create verification session");
+			}
+		} catch (err) {
+			setError("An unexpected error occurred");
+			console.error("Checkout initiation error:", err);
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	const handleVoiceVerificationSuccess = async () => {
+		setIsProcessing(true);
+		setError(null);
+
+		try {
+			// Place the order
+			const response = await fetch("/api/place-order", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: checkoutData.email,
+					cartItems: cart.items,
+					verificationSessionId,
+				}),
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
 				setPurchasedItems([...cart.items]);
 				setStep("success");
 				clearCart();
+				setShowVoiceVerification(false);
+				console.log(`Order placed! Order ID: ${result.orderId}`);
+			} else {
+				setError(result.error || "Failed to place order");
 			}
-
+		} catch (err) {
+			setError("An unexpected error occurred");
+			console.error("Place order error:", err);
+		} finally {
 			setIsProcessing(false);
-		}, 2000);
+		}
 	};
 
-	const handleVoiceVerificationSuccess = () => {
-		setPurchasedItems([...cart.items]);
-		setStep("success");
-		clearCart();
+	const handleVoiceVerificationClose = () => {
+		setShowVoiceVerification(false);
 	};
 
 	const handleInputChange = (field: keyof CheckoutData, value: string) => {
@@ -140,6 +143,11 @@ export default function Checkout() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
+								{error && (
+									<div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+										<p className="text-red-800 text-sm">{error}</p>
+									</div>
+								)}
 								<form onSubmit={handleFormSubmit} className="space-y-6">
 									{/* Personal Information */}
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -425,16 +433,12 @@ export default function Checkout() {
 			</div>
 
 			{/* Voice Verification Dialog */}
-			{currentOptions && (
-				<VoiceVerificationDialog
-					isOpen={isOpen}
-					onClose={handleClose}
-					onSuccess={handleSuccess}
-					transactionId={currentOptions.transactionId}
-					customerData={currentOptions.customerData}
-					riskLevel={currentOptions.riskLevel}
-				/>
-			)}
+			<VoiceVerificationDialog
+				isOpen={showVoiceVerification}
+				onClose={handleVoiceVerificationClose}
+				onSuccess={handleVoiceVerificationSuccess}
+				email={checkoutData.email}
+			/>
 		</div>
 	);
 }
