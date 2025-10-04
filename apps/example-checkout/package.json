@@ -1,0 +1,33 @@
+{
+	"name": "example-checkout",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev --turbopack --port 3001",
+		"build": "next build --turbopack",
+		"start": "next start",
+		"lint": "biome check",
+		"format": "biome format --write",
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"next": "15.5.4",
+		"@radix-ui/react-slot": "^1.1.0",
+		"class-variance-authority": "^0.7.0",
+		"clsx": "^2.1.1",
+		"lucide-react": "^0.468.0",
+		"tailwind-merge": "^2.5.4",
+		"tailwindcss-animate": "^1.0.7",
+		"typescript": "^5"
+	},
+	"devDependencies": {
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"@tailwindcss/postcss": "^4",
+		"tailwindcss": "^4",
+		"@biomejs/biome": "2.2.0"
+	}
+}
