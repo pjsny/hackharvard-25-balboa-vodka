@@ -301,9 +301,9 @@ export const BalboaVerificationPopup = ({
 }: BalboaVerificationPopupProps) => {
   const [state, setState] = useState<VerificationState>("idle");
   const [steps, setSteps] = useState<VerificationStep[]>([
-    { name: "Secret phrase match", status: "pending" },
-    { name: "Voice embedding similarity", status: "pending" },
-    { name: "Audio fingerprint verification", status: "pending" },
+    { name: "Answer validation", status: "pending" },
+    { name: "Response authenticity check", status: "pending" },
+    { name: "Identity confirmation", status: "pending" },
   ]);
   const [audioLevel, setAudioLevel] = useState(0);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
@@ -495,35 +495,37 @@ export const BalboaVerificationPopup = ({
       case "idle":
         return {
           title: "Verification Required",
-          description: `Speak phrase: "${secretPhrase}"`,
+          description: question
+            ? `Ready to answer: ${question}`
+            : "Ready to answer your security question",
           icon: Shield,
           iconClass: "text-foreground",
         };
       case "recording":
         return {
           title: "Recording",
-          description: "Speak your secret phrase now",
+          description: "Answer the question clearly",
           icon: Mic,
           iconClass: "text-foreground",
         };
       case "verifying":
         return {
           title: "Analyzing",
-          description: "Processing voice signature",
+          description: "Verifying your answer",
           icon: Volume,
           iconClass: "text-foreground",
         };
       case "success":
         return {
           title: "Access Granted",
-          description: "Identity confirmed",
+          description: "Answer verified successfully",
           icon: Check,
           iconClass: "text-foreground",
         };
       case "error":
         return {
           title: "Access Denied",
-          description: "Verification failed",
+          description: "Answer verification failed",
           icon: X,
           iconClass: "text-foreground",
         };
@@ -575,13 +577,21 @@ export const BalboaVerificationPopup = ({
               </>
             )}
             {state === "idle" && (
-              <Description>Complete voice verification to proceed</Description>
+              <Description>
+                {question
+                  ? "The agent will ask you a question - answer with information only you know"
+                  : "Answer the security question to verify your identity"}
+              </Description>
             )}
             {state === "recording" && (
-              <Description>Speak clearly into your microphone</Description>
+              <Description>
+                {isSpeaking
+                  ? "Listen to the question"
+                  : "Provide your answer now"}
+              </Description>
             )}
             {state === "error" && (
-              <ErrorText>Please try again</ErrorText>
+              <ErrorText>Verification failed - please try again</ErrorText>
             )}
           </TitleSection>
 
@@ -629,7 +639,7 @@ export const BalboaVerificationPopup = ({
               disabled={!elevenLabsConfig.agentId}
             >
               <Mic size={20} style={{ marginRight: '12px' }} />
-              Start Verification
+              {question ? "Answer Question" : "Start Verification"}
             </ActionButton>
           )}
 

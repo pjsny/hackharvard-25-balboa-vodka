@@ -66,7 +66,6 @@ Respond with ONLY "true" or "false" (no quotes, no explanation, just the boolean
 true = answer is valid and appropriate
 false = answer is invalid, inappropriate, or evasive`,
 					temperature: 0.1,
-					maxTokens: 10,
 				});
 
 				const verified = text.trim().toLowerCase() === "true";

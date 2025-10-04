@@ -54,7 +54,6 @@ DO NOT:
 
 Generate ONLY the message text:`,
       temperature: 0.8, // Higher temperature for natural variety
-      maxTokens: 100,
     });
 
     const firstMessage = text.trim();
