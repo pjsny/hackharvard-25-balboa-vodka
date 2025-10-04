@@ -1,0 +1,31 @@
+---
+alwaysApply: false
+---
+This is a comprehensive and accurate outline of the necessary components for building the Balboa application, based on the functionalities described in the sources.
+Here is an expansion on those thoughts, detailing how the listed components align with Balboa’s structure and the technologies mentioned in the sources:
+1. Web Server for Authentication and Safety Logic (NextJS App)
+This is the core backend component responsible for enforcing Balboa’s security features, acting as the "Cognitive Lock".
+• Core Function: This server must run the logic that validates the three necessary security checks:
+    ◦ Verifying that the secret phrase matches the phrase stored from onboarding.
+    ◦ Ensuring the voice embedding similarity holds true (biometric comparison).
+    ◦ (Optionally) Checking if the cryptographic audio fingerprint matches the original wav file.
+• Triggering Mechanism: The web server component must be configured to communicate with the merchant's fraud analysis system. Balboa is only enabled conditionally by the developer if a purchase is flagged as high risk by their fraud analysis.
+• Security Insight: This server provides the secure environment necessary to manage and compare the cryptographic audio fingerprint, which is designed to prevent typical JavaScript fingerprinting and acts as a "complete brick wall" against automated bots.
+2. Onboarding App at Main Balboa Website (NextJS Lander)
+A dedicated onboarding flow is crucial because Balboa requires users to enroll their voice data initially.
+• Core Function: This application guides the user through the process of capturing "voice secrets".
+• Technology Used: The sources specifically mention that the Gemini API is used to guide users through onboarding and capture these necessary “voice secrets”.
+• Data Capture: The output of this flow results in the stored secrets and embeddings needed for later verification during checkout.
+3. AI SDK to Implement This Into Sites
+This component (or set of components) is necessary to package Balboa's integration logic, allowing e-commerce merchants to easily deploy the security layer.
+• Integration Requirement: The SDK must handle the client-side acquisition of the shopper's spoken phrase and the secure transmission of the audio data to the backend server (Component 1) for real-time verification.
+• Technology Inclusion: The SDK would need to incorporate the specific proprietary technologies Balboa utilizes:
+    ◦ Integration points for utilizing the Gemini API for working with voice secrets and embeddings.
+    ◦ Integration with ElevenLabs for providing natural voice interactions to the shopper.
+    ◦ The client-side portion of the custom cryptographic audio fingerprint logic, which borrows ideas from steganography. The team prototyped client-side audio fingerprinting without heavy libraries.
+• Future Expansion: Developing a robust SDK supports the future goal of expansion to more e-commerce platforms.
+4. DEMO Site: Example E-commerce Checkout
+A working demo is essential for proving the concept and testing the balancing of security versus friction.
+• Purpose: The demo site showcases Balboa kicking in only on high-risk checkout flows.
+• Technical Stack: The sources confirm that the team successfully integrated Balboa into a Medusa.js / Vercel demo store.
+• Scenario Focus: This site is crucial for demonstrating the solution in the Card Not Present (CNP) environment, which accounts for the majority of payment fraud losses for merchants and is the specific target environment for Balboa.
