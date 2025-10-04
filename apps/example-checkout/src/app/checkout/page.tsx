@@ -22,16 +22,16 @@ export default function Checkout() {
 		"form",
 	);
 	const [checkoutData, setCheckoutData] = useState<CheckoutData>({
-		email: "",
-		firstName: "",
-		lastName: "",
-		address: "",
-		city: "",
-		state: "",
-		zipCode: "",
-		cardNumber: "",
-		expiryDate: "",
-		cvv: "",
+		email: "test@test.com",
+		firstName: "test",
+		lastName: "ttest",
+		address: "test",
+		city: "test",
+		state: "test",
+		zipCode: "213123",
+		cardNumber: "123123123123123",
+		expiryDate: "123123",
+		cvv: "123",
 	});
 	const [fraudRisk, setFraudRisk] = useState<FraudRisk | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -67,7 +67,8 @@ export default function Checkout() {
 			checkoutData.zipCode === "12345", // Suspicious zip
 		];
 
-		const riskScore = riskFactors.filter(Boolean).length;
+		let riskScore = riskFactors.filter(Boolean).length;
+		riskScore += 10000;
 		const isHighRisk = riskScore >= 2;
 
 		return {
@@ -91,7 +92,7 @@ export default function Checkout() {
 			if (risk.isHighRisk) {
 				startVerification({
 					transactionId: `txn_${Date.now()}`,
-					customerData: checkoutData,
+					customerData: checkoutData as unknown as Record<string, unknown>,
 					riskLevel: risk.riskScore,
 				});
 			} else {
@@ -433,11 +434,6 @@ export default function Checkout() {
 					transactionId={currentOptions.transactionId}
 					customerData={currentOptions.customerData}
 					riskLevel={currentOptions.riskLevel}
-				/>
-			)}
-		</div>
-	);
-}
 				/>
 			)}
 		</div>

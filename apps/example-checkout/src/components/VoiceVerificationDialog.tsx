@@ -1,6 +1,6 @@
 "use client";
 
-import { useBalboa } from "@balboa/sdk";
+import { useBalboa } from "@balboa/web";
 import { CheckCircle, Loader2, Mic, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

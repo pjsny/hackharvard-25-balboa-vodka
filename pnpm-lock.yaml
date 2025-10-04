@@ -25,7 +25,7 @@ importers:
     dependencies:
       '@balboa/web':
         specifier: workspace:^
-        version: link:../../packages/balboa-web
+        version: link:../../packages/balboa-web-sdk
       '@radix-ui/react-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.0)(@types/react@19.2.0)(react-dom@19.1.0)(react@19.1.0)
@@ -114,9 +114,6 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.18)
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
     devDependencies:
       '@next/eslint-plugin-next':
         specifier: 14.2.8
@@ -155,49 +152,6 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
-  packages/balboa-sdk:
-    dependencies:
-      '@radix-ui/react-dialog':
-        specifier: ^1.1.15
-        version: 1.1.15(@types/react-dom@18.3.7)(@types/react@18.3.25)(react-dom@18.3.1)(react@18.3.1)
-      '@vapi-ai/web':
-        specifier: ^2.4.0
-        version: 2.4.0
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
-      lucide-react:
-        specifier: ^0.544.0
-        version: 0.544.0(react@18.3.1)
-      react:
-        specifier: ^18
-        version: 18.3.1
-      tailwind-merge:
-        specifier: ^2.6.0
-        version: 2.6.0
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../eslint-config
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/node':
-        specifier: ^20
-        version: 20.19.19
-      '@types/react':
-        specifier: ^18.3.11
-        version: 18.3.25
-      '@types/react-dom':
-        specifier: ^18.3.0
-        version: 18.3.7(@types/react@18.3.25)
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.0(typescript@5.9.3)
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
-
   packages/balboa-server-sdk:
     dependencies:
       zod:
@@ -220,7 +174,7 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
-  packages/balboa-web:
+  packages/balboa-web-sdk:
     dependencies:
       '@radix-ui/react-dialog':
         specifier: ^1.1.15

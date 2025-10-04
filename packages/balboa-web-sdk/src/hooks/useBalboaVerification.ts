@@ -51,8 +51,3 @@ export function useBalboaVerification(
 		verifyWithBalboa,
 	};
 }
-		handleSuccess,
-		handleClose,
-		verifyWithBalboa,
-	};
-}

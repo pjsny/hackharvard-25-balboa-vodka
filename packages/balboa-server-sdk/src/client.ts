@@ -199,11 +199,3 @@ export class BalboaServerClient {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 }
-
-	/**
-	 * Sleep utility
-	 */
-	private sleep(ms: number): Promise<void> {
-		return new Promise((resolve) => setTimeout(resolve, ms));
-	}
-}
