@@ -57,6 +57,10 @@ async function handleAgentEvent(event: ElevenLabsWebhookEvent) {
       await handleQuestionCompleted(event.data);
       break;
 
+    case "tool_call_completed":
+      await handleToolCallCompleted(event.data);
+      break;
+
     case "agent.error":
       await handleAgentError(event.data);
       break;
@@ -106,6 +110,103 @@ async function handleQuestionCompleted(data: any) {
 
   console.log(`Successfully processed completed question for ${data.email}`);
   console.log(`User ${data.email} has completed voice verification with answer: "${data.answer}"`);
+}
+
+async function handleToolCallCompleted(data: any) {
+  console.log("Tool call completed:", {
+    tool_name: data.tool_name,
+    tool_parameters: data.tool_parameters,
+    conversation_id: data.conversation_id,
+    agent_id: data.agent_id
+  });
+
+  // Extract parameters from the tool call
+  const params = data.tool_parameters || {};
+
+  // If this is the complete_verification tool
+  if (data.tool_name === "complete_verification") {
+    const email = params.user_email;
+    const answer = params.user_answer;
+    const question = params.verification_question;
+    const sessionId = params.session_id;
+
+    console.log("Verification completed via tool call:", {
+      email,
+      answer,
+      question,
+      sessionId
+    });
+
+    // Validate required fields
+    if (!email || !answer || !question) {
+      console.error("Missing required fields: email, answer, or question");
+      throw new Error("Missing required fields: email, answer, or question");
+    }
+
+    // Zero-knowledge proof: Verify answer using LLM (Gemini Flash)
+    // The correct answer is never sent to the frontend or stored with the user
+    console.log("🔍 Verifying answer with Gemini Flash...");
+
+    try {
+      const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_BALBOA_API_URL || 'http://localhost:3000'}/api/verify-answer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question,
+          userAnswer: answer,
+          email,
+          conversationId: data.conversation_id
+        })
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error(`Verification API returned ${verifyResponse.status}`);
+      }
+
+      const verificationResult = await verifyResponse.json();
+
+      console.log("✅ Verification result:", {
+        email,
+        verified: verificationResult.verified,
+        confidence: verificationResult.confidence,
+        reason: verificationResult.reason
+      });
+
+      // TODO: Store the verification result in your database
+      // Example: await db.verifications.create({
+      //   email,
+      //   question,
+      //   user_answer: answer,
+      //   verified: verificationResult.verified,
+      //   confidence: verificationResult.confidence,
+      //   reason: verificationResult.reason,
+      //   session_id: sessionId,
+      //   conversation_id: data.conversation_id,
+      //   agent_id: data.agent_id,
+      //   completed_at: new Date()
+      // });
+
+      if (verificationResult.verified) {
+        console.log(`✅ User ${email} PASSED voice verification`);
+        console.log(`📝 Question: "${question}"`);
+        console.log(`💬 Answer: "${answer}"`);
+        console.log(`🎯 Confidence: ${(verificationResult.confidence * 100).toFixed(1)}%`);
+      } else {
+        console.log(`❌ User ${email} FAILED voice verification`);
+        console.log(`📝 Question: "${question}"`);
+        console.log(`💬 Answer: "${answer}"`);
+        console.log(`🚫 Reason: ${verificationResult.reason}`);
+      }
+
+    } catch (error) {
+      console.error("Error verifying answer with LLM:", error);
+      // Don't throw - we still want to process the webhook
+      // But log the error for monitoring
+      console.error("Failed to verify answer, manual review may be required");
+    }
+  }
 }
 
 async function handleAgentError(data: any) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
-import { Mic, Check, X, Shield } from "lucide-react";
+import { Mic, Check, X, Shield, Volume } from "lucide-react";
 import { styled } from "../styles/stitches.config";
 import { useElevenLabsVerification } from "../elevenlabs-hook";
 
@@ -283,7 +283,8 @@ interface BalboaVerificationPopupProps {
   open: boolean;
   onClose: () => void;
   onVerified: () => void;
-  secretPhrase?: string;
+  email?: string;
+  question?: string;
   config?: {
     apiKey?: string;
     agentId?: string;
@@ -294,7 +295,8 @@ export const BalboaVerificationPopup = ({
   open,
   onClose,
   onVerified,
-  secretPhrase = "Balboa at sunset",
+  email,
+  question,
   config = {}
 }: BalboaVerificationPopupProps) => {
   const [state, setState] = useState<VerificationState>("idle");
@@ -406,8 +408,22 @@ export const BalboaVerificationPopup = ({
       const sessionOptions = {
         agentId: elevenLabsConfig.agentId,
         connectionType: 'websocket' as const,
-        userId: sessionId
+        userId: sessionId,
+        // Inject dynamic variables into the conversation
+        // These variables are accessible in the agent's prompt using {{variable_name}}
+        dynamicVariables: {
+          user_email: email || '',
+          verification_question: question || 'Please verify your identity',
+          session_id: sessionId,
+          timestamp: new Date().toISOString()
+        }
       };
+
+      console.log('🚀 Starting verification with dynamic variables:', {
+        email: email || '',
+        question: question || 'Please verify your identity',
+        sessionId
+      });
 
       await startVerification(sessionId, sessionOptions);
     } catch (error) {
@@ -457,7 +473,7 @@ export const BalboaVerificationPopup = ({
         return {
           title: "Analyzing",
           description: "Processing voice signature",
-          icon: Volume2,
+          icon: Volume,
           iconClass: "text-foreground",
         };
       case "success":

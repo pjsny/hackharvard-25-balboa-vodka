@@ -5,6 +5,7 @@ interface VoiceVerificationDialogProps {
 	onClose: () => void;
 	onSuccess: () => void;
 	email: string;
+	question?: string;
 	config?: {
 		apiKey?: string;
 		agentId?: string;
@@ -16,6 +17,7 @@ export function VoiceVerificationDialog({
 	onClose,
 	onSuccess,
 	email,
+	question,
 	config,
 }: VoiceVerificationDialogProps) {
 	return (
@@ -23,7 +25,8 @@ export function VoiceVerificationDialog({
 			open={isOpen}
 			onClose={onClose}
 			onVerified={onSuccess}
-			secretPhrase="Balboa at sunset"
+			email={email}
+			question={question}
 			config={config}
 		/>
 	);
