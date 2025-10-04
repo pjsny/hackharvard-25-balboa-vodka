@@ -400,15 +400,51 @@ export const BalboaVerificationPopup = ({
     };
   }, []);
 
+  // Generate a varied first message using LLM
+  const generateFirstMessage = async (q?: string): Promise<string> => {
+    if (!q) {
+      return "This transaction seems suspicious. Could you quickly verify your identity?";
+    }
+
+    try {
+      // Call API to generate natural first message using Gemini Flash
+      const response = await fetch(`${elevenLabsConfig.baseUrl || process.env.NEXT_PUBLIC_BALBOA_API_URL || 'http://localhost:3000'}/api/generate-first-message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question: q }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate first message: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('🎤 Generated first message:', data.firstMessage);
+
+      return data.firstMessage;
+    } catch (error) {
+      console.error('Error generating first message, using fallback:', error);
+      // Fallback to hardcoded message on error
+      return `This transaction seems suspicious. Could you quickly tell me ${q.toLowerCase()}?`;
+    }
+  };
+
   const startRecording = async () => {
     try {
       setState("recording");
       const sessionId = `verification_${Date.now()}`;
 
+      // Generate first message with the question using LLM
+      const firstMessage = await generateFirstMessage(question);
+
       const sessionOptions = {
         agentId: elevenLabsConfig.agentId,
         connectionType: 'websocket' as const,
         userId: sessionId,
+        // Override the agent's first message
+        firstMessage: firstMessage,
         // Inject dynamic variables into the conversation
         // These variables are accessible in the agent's prompt using {{variable_name}}
         dynamicVariables: {
@@ -422,6 +458,7 @@ export const BalboaVerificationPopup = ({
       console.log('🚀 Starting verification with dynamic variables:', {
         email: email || '',
         question: question || 'Please verify your identity',
+        firstMessage,
         sessionId
       });
 

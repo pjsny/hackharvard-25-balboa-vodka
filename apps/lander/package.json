@@ -9,6 +9,7 @@
 		"lint": "eslint . --max-warnings 0"
 	},
 	"dependencies": {
+		"@ai-sdk/google": "^2.0.17",
 		"@auth/drizzle-adapter": "^1.10.0",
 		"@balboa/web": "workspace:*",
 		"@elevenlabs/react": "^0.7.1",

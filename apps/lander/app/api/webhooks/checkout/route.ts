@@ -144,20 +144,17 @@ async function handleToolCallCompleted(data: any) {
     }
 
     // Zero-knowledge proof: Verify answer using LLM (Gemini Flash)
-    // The correct answer is never sent to the frontend or stored with the user
+    // Only send the answer - question is already stored in backend
     console.log("🔍 Verifying answer with Gemini Flash...");
 
     try {
-      const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_BALBOA_API_URL || 'http://localhost:3000'}/api/verify-answer`, {
+      const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_BALBOA_API_URL || 'http://localhost:3000'}/api/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          question,
-          userAnswer: answer,
-          email,
-          conversationId: data.conversation_id
+          answer: answer  // Only send answer - true zero-knowledge!
         })
       });
 
@@ -165,13 +162,13 @@ async function handleToolCallCompleted(data: any) {
         throw new Error(`Verification API returned ${verifyResponse.status}`);
       }
 
-      const verificationResult = await verifyResponse.json();
+      const verified = await verifyResponse.json(); // Simple true/false
 
       console.log("✅ Verification result:", {
         email,
-        verified: verificationResult.verified,
-        confidence: verificationResult.confidence,
-        reason: verificationResult.reason
+        verified,
+        answer,
+        question // We know the question here, but didn't send it to /api/verify
       });
 
       // TODO: Store the verification result in your database
@@ -179,25 +176,21 @@ async function handleToolCallCompleted(data: any) {
       //   email,
       //   question,
       //   user_answer: answer,
-      //   verified: verificationResult.verified,
-      //   confidence: verificationResult.confidence,
-      //   reason: verificationResult.reason,
+      //   verified: verified,
       //   session_id: sessionId,
       //   conversation_id: data.conversation_id,
       //   agent_id: data.agent_id,
       //   completed_at: new Date()
       // });
 
-      if (verificationResult.verified) {
+      if (verified) {
         console.log(`✅ User ${email} PASSED voice verification`);
         console.log(`📝 Question: "${question}"`);
         console.log(`💬 Answer: "${answer}"`);
-        console.log(`🎯 Confidence: ${(verificationResult.confidence * 100).toFixed(1)}%`);
       } else {
         console.log(`❌ User ${email} FAILED voice verification`);
         console.log(`📝 Question: "${question}"`);
         console.log(`💬 Answer: "${answer}"`);
-        console.log(`🚫 Reason: ${verificationResult.reason}`);
       }
 
     } catch (error) {
