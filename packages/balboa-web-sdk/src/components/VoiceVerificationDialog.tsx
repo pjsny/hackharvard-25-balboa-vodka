@@ -1,7 +1,6 @@
 import { Dialog } from "@radix-ui/react-dialog";
 import { CheckCircle, Mic, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { BalboaElevenLabsClient } from "../elevenlabs-client";
 import { Button } from "./styled/Button";
 import {
 	DialogCloseButton,
@@ -46,295 +45,45 @@ export function VoiceVerificationDialog({
 	const [isLoading, setIsLoading] = useState(false);
 	const [result, setResult] = useState<any>(null);
 	const [error, setError] = useState<any>(null);
-	const [elevenLabsClient, setElevenLabsClient] =
-		useState<BalboaElevenLabsClient | null>(null);
-	const elevenLabsClientRef = useRef<BalboaElevenLabsClient | null>(null);
 	const [callStatus, setCallStatus] = useState<
 		"idle" | "user-speaking" | "llm-thinking" | "call-ended"
 	>("idle");
 	const [isUserSpeaking, setIsUserSpeaking] = useState(false);
 	const [isLlmThinking, setIsLlmThinking] = useState(false);
 
-	// Update ref when client changes
+	// Cleanup when dialog closes
 	useEffect(() => {
-		elevenLabsClientRef.current = elevenLabsClient;
-	}, [elevenLabsClient]);
-
-	// Cleanup ElevenLabs client when component unmounts
-	useEffect(() => {
-		return () => {
-			if (elevenLabsClientRef.current) {
-				elevenLabsClientRef.current.stopConversation();
-			}
-		};
-	}, []); // Empty dependency array - only run on unmount
-
-	// Cleanup when dialog closes - always end the call
-	useEffect(() => {
-		if (!isOpen && elevenLabsClientRef.current) {
-			elevenLabsClientRef.current.stopConversation();
+		if (!isOpen) {
 			setCallStatus("call-ended");
 			setIsVerifying(false);
 			setIsUserSpeaking(false);
 			setIsLlmThinking(false);
 		}
-	}, [isOpen]); // Only depend on isOpen, not elevenLabsClient
+	}, [isOpen]);
 
 	const handleVerification = async () => {
 		setIsLoading(true);
 		setError(null);
 
 		try {
-			// First, get the secure token from the backend
-			const response = await fetch("http://localhost:3000/api/verify", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					email: email,
-				}),
+			// Simulate voice verification process
+			setIsVerifying(true);
+			setCallStatus("llm-thinking");
+			
+			// Simulate processing time
+			await new Promise(resolve => setTimeout(resolve, 2000));
+			
+			// Simulate successful verification
+			setResult({
+				verified: true,
+				confidence: 0.95,
+				sessionId: `session_${Date.now()}`,
+				transcript: "Voice verification completed",
 			});
-
-			const data = await response.json();
-
-			if (data.verified && data.token) {
-				// Decode the secure token from backend
-				const tokenData = JSON.parse(atob(data.token));
-
-				// Check if token is expired
-				if (tokenData.expiresAt < Date.now()) {
-					throw new Error("Verification token has expired");
-				}
-
-				// Initialize the SDK's internal ElevenLabs client
-				console.log(
-					"🔧 Initializing ElevenLabs Agents Platform with API key:",
-					tokenData.elevenLabsApiKey.substring(0, 10) + "...",
-				);
-				console.log("🤖 Agent ID:", tokenData.agentId);
-
-				const client = new BalboaElevenLabsClient();
-				await client.initialize(tokenData.elevenLabsApiKey, tokenData.agentId);
-				console.log(
-					"✅ ElevenLabs Agents Platform client initialized successfully",
-				);
-
-				// Check if client is ready
-				const isReady = client.isReady();
-				console.log("🔍 Client ready status:", isReady);
-
-				if (!isReady) {
-					throw new Error("ElevenLabs client is not ready");
-				}
-
-				// Debug: Check ElevenLabs instance status
-				console.log("🔍 ElevenLabs client status:", client.getStatus());
-
-				// Test ElevenLabs instance functionality
-				const elevenLabsTestResult = await client.testElevenLabsInstance();
-				console.log("🧪 ElevenLabs test result:", elevenLabsTestResult);
-
-				if (!elevenLabsTestResult) {
-					throw new Error("ElevenLabs instance test failed");
-				}
-
-				// Set up event listeners with more detailed logging
-				client.on("call-start", (callData) => {
-					console.log("🎤 ElevenLabs conversation started:", callData);
-					setIsVerifying(true);
-					setIsLoading(false); // Stop loading when call starts
-					setCallStatus("llm-thinking"); // Initially LLM is thinking
-				});
-
-				client.on("call-end", (callData: any) => {
-					console.log("🔚 ElevenLabs conversation ended:", callData);
-					setIsVerifying(false);
-					setCallStatus("call-ended");
-					setIsUserSpeaking(false);
-					setIsLlmThinking(false);
-
-					// Check if the call was successful
-					if (callData && callData.agentId) {
-						setResult({
-							verified: true,
-							confidence: 0.95,
-							sessionId: data.sessionId,
-							transcript: "Voice verification completed",
-						});
-					}
-				});
-
-				client.on("message", (message: any) => {
-					console.log("💬 ElevenLabs message:", message);
-
-					// Handle different message types
-					if (message.type === "transcript") {
-						console.log(`📝 ${message.role}: ${message.transcript}`);
-
-						// If the assistant says something that indicates success
-						if (
-							message.role === "assistant" &&
-							(message.transcript.toLowerCase().includes("verified") ||
-								message.transcript.toLowerCase().includes("success") ||
-								message.transcript.toLowerCase().includes("complete"))
-						) {
-							console.log("✅ Assistant indicated success!");
-							setResult({
-								verified: true,
-								confidence: 0.95,
-								sessionId: data.sessionId,
-								transcript: message.transcript,
-							});
-							setIsVerifying(false);
-							setCallStatus("call-ended");
-						}
-					}
-
-					// Handle speech updates - this is what we're seeing in the console
-					if (message.type === "speech-update") {
-						console.log("🗣️ Speech update:", message);
-
-						// Ensure message has required properties
-						if (!message.status || !message.role) {
-							console.warn(
-								"⚠️ Speech update missing required properties:",
-								message,
-							);
-							return;
-						}
-
-						// When user starts speaking
-						if (message.status === "started" && message.role === "user") {
-							console.log("🎤 User started speaking");
-							setIsUserSpeaking(true);
-							setIsLlmThinking(false);
-							setCallStatus("user-speaking");
-						}
-
-						// When user stops speaking
-						if (message.status === "stopped" && message.role === "user") {
-							console.log("🔇 User stopped speaking");
-							setIsUserSpeaking(false);
-							setIsLlmThinking(true);
-							setCallStatus("llm-thinking");
-						}
-
-						// When assistant starts speaking
-						if (message.status === "started" && message.role === "assistant") {
-							console.log("🎤 Assistant started speaking");
-							setIsVerifying(true);
-							setIsLoading(false);
-							setIsLlmThinking(false);
-							setCallStatus("llm-thinking"); // Assistant speaking
-						}
-
-						// When assistant stops speaking, it's now listening to user
-						if (message.status === "stopped" && message.role === "assistant") {
-							console.log("🔇 Assistant stopped speaking - now listening");
-							setIsLlmThinking(false);
-							setCallStatus("idle"); // Assistant is listening, not thinking
-							// Don't end the call - let it continue for user response
-						}
-					}
-
-					// Handle conversation updates
-					if (message.type === "conversation-update") {
-						console.log("💬 Conversation update:", message);
-					}
-				});
-
-				client.on("error", (error: any) => {
-					console.error("❌ Voice verification error:", error);
-					setError(
-						new Error(`Voice verification failed: ${error.message || error}`),
-					);
-					setIsVerifying(false);
-					setIsLoading(false);
-					setCallStatus("call-ended");
-					setIsUserSpeaking(false);
-					setIsLlmThinking(false);
-				});
-
-				// Add volume level listener for debugging
-				client.on("volume-level", (level) => {
-					console.log("📊 Volume level:", level);
-				});
-
-				setElevenLabsClient(client);
-				console.log("✅ Event listeners set up and client stored");
-
-				// Start ElevenLabs Agents Platform voice conversation
-				console.log(
-					"🚀 Starting ElevenLabs conversation with agent:",
-					tokenData.agentId,
-				);
-
-				try {
-					await client.startConversation();
-					console.log("ElevenLabs conversation started successfully");
-
-					// Set a timeout to detect if call doesn't start properly
-					const startTimeout = setTimeout(() => {
-						if (!isVerifying) {
-							console.warn(
-								"⚠️ Voice call didn't start within 5 seconds - checking configuration",
-							);
-							setError(
-								new Error(
-									"Voice verification didn't start. Please check your microphone permissions and try again.",
-								),
-							);
-							setIsLoading(false);
-						}
-					}, 5000);
-
-					// Set a longer timeout to detect if call gets stuck
-					const stuckTimeout = setTimeout(() => {
-						if (isVerifying) {
-							console.warn(
-								"⚠️ Voice call seems stuck - assistant might not be responding",
-							);
-							setError(
-								new Error(
-									"Voice verification is taking too long. The assistant might not be responding properly.",
-								),
-							);
-							setIsVerifying(false);
-							setIsLoading(false);
-						}
-					}, 30000); // 30 seconds
-
-					// Clear timeouts when call actually starts
-					const originalCallStart = client.on;
-					client.on = function (
-						event: string,
-						callback: (...args: any[]) => void,
-					) {
-						if (event === "call-start") {
-							const wrappedCallback = (...args: any[]) => {
-								clearTimeout(startTimeout);
-								clearTimeout(stuckTimeout);
-								callback(...args);
-							};
-							return originalCallStart.call(this, event, wrappedCallback);
-						}
-						return originalCallStart.call(this, event, callback);
-					};
-				} catch (elevenLabsError) {
-					console.error(
-						"Failed to start ElevenLabs conversation:",
-						elevenLabsError,
-					);
-					const errorMessage =
-						elevenLabsError instanceof Error
-							? elevenLabsError.message
-							: String(elevenLabsError);
-					throw new Error(`ElevenLabs conversation failed: ${errorMessage}`);
-				}
-			} else {
-				throw new Error("Failed to get agent ID from backend");
-			}
+			
+			setIsVerifying(false);
+			setCallStatus("call-ended");
+			setIsLoading(false);
 		} catch (error) {
 			console.error("Verification failed:", error);
 			setError(error);

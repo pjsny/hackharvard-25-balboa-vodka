@@ -2,7 +2,6 @@ import type {
 	BalboaServerConfig,
 	CreateVerificationRequest,
 	CreateVerificationResponse,
-	SubmitElevenLabsResultRequest,
 	VerificationSession,
 	VerificationStatusResponse,
 } from "./types";
@@ -50,27 +49,6 @@ export class BalboaServerClient {
 		}
 	}
 
-	/**
-	 * Submit ElevenLabs result to your backend
-	 */
-	async submitElevenLabsResult(
-		sessionId: string,
-		elevenLabsResult: SubmitElevenLabsResultRequest,
-	): Promise<{ success: boolean }> {
-		try {
-			const response = await this.makeRequest(
-				`/api/verify/${sessionId}/elevenlabs-result`,
-				{
-					method: "POST",
-					body: JSON.stringify(elevenLabsResult),
-				},
-			);
-
-			return response.json();
-		} catch (error) {
-			throw this.handleError(error, "Failed to submit ElevenLabs result");
-		}
-	}
 
 	/**
 	 * Get session details from your backend

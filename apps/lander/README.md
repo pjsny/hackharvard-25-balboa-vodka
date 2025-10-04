@@ -2,22 +2,12 @@
 
 ### Environment Setup
 
-Before running the application, you need to set up your ElevenLabs configuration:
+Before running the application, you can optionally set up environment variables:
 
-1. **Get your ElevenLabs API Key:**
-   - Go to [ElevenLabs API Keys](https://elevenlabs.io/app/settings/api-keys)
-   - Create a new API key or copy an existing one
-
-2. **Create an ElevenLabs Agent:**
-   - Go to [ElevenLabs Agents](https://elevenlabs.io/app/agents)
-   - Create a new agent for voice verification
-   - Copy the Agent ID
-
-3. **Set Environment Variables:**
+1. **Set Environment Variables (Optional):**
    Create a `.env.local` file in the `apps/lander` directory:
    ```bash
-   ELEVENLABS_API_KEY=your_api_key_here
-   ELEVENLABS_AGENT_ID=your_agent_id_here
+   # Add any required environment variables here
    ```
 
 ### Running the Application

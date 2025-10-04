@@ -12,7 +12,7 @@ sequenceDiagram
     participant Frontend
     participant BalboaSDK
     participant BackendAPI
-    participant VAPI
+    participant VoiceAPI
     participant PaymentProcessor
 
     User->>Frontend: Fill checkout form
@@ -28,14 +28,14 @@ sequenceDiagram
     BackendAPI->>BackendAPI: Create verification session
     BackendAPI-->>BalboaSDK: { sessionId, status: 'pending' }
 
-    BalboaSDK->>VAPI: vapi.start(assistantId)
-    Note over VAPI: VAPI handles microphone access<br/>and voice conversation internally
-    VAPI->>User: "Please say: Balboa verification complete"
-    User->>VAPI: Speak phrase
-    VAPI->>VAPI: Process voice data (STT + LLM + TTS)
-    VAPI-->>BalboaSDK: Call ended with recording & transcript
+    BalboaSDK->>VoiceAPI: voice.start(assistantId)
+    Note over VoiceAPI: VoiceAPI handles microphone access<br/>and voice conversation internally
+    VoiceAPI->>User: "Please say: Balboa verification complete"
+    User->>VoiceAPI: Speak phrase
+    VoiceAPI->>VoiceAPI: Process voice data (STT + LLM + TTS)
+    VoiceAPI-->>BalboaSDK: Call ended with recording & transcript
 
-    BalboaSDK->>BackendAPI: POST /api/verify/[id]/vapi-result
+    BalboaSDK->>BackendAPI: POST /api/verify/[id]/voice-result
     BackendAPI->>BackendAPI: Validate voice data
     BackendAPI->>BackendAPI: Check phrase accuracy
     BackendAPI->>BackendAPI: Verify voice embedding
@@ -115,9 +115,9 @@ The `verifyWithBalboa()` function orchestrates the following sequence:
 
 1. **Start Session:** The SDK makes a `POST` request to the backend `/api/verify` endpoint with the transaction and customer data to create a new verification session.
 
-2. **Initiate Voice Conversation:** The SDK triggers a voice conversation via the VAPI service. VAPI handles all microphone access, speech-to-text, LLM processing, and text-to-speech internally.
+2. **Initiate Voice Conversation:** The SDK triggers a voice conversation via the VoiceAPI service. VoiceAPI handles all microphone access, speech-to-text, LLM processing, and text-to-speech internally.
 
-3. **Submit Voice Data:** Upon conversation completion, the SDK sends the call results (recording, transcript) to the backend `/api/verify/[sessionId]/vapi-result` endpoint.
+3. **Submit Voice Data:** Upon conversation completion, the SDK sends the call results (recording, transcript) to the backend `/api/verify/[sessionId]/voice-result` endpoint.
 
 4. **Poll for Status:** The SDK begins polling the backend `/api/verify/[sessionId]/status` endpoint to get the final verification outcome.
    - Polling uses an **exponential backoff** strategy to be efficient
@@ -170,9 +170,9 @@ The SDK requires the host application to implement the following three server-si
 }
 ```
 
-### 3. Submit VAPI Result
+### 3. Submit Voice Result
 
-**Endpoint:** `POST /api/verify/[id]/vapi-result`
+**Endpoint:** `POST /api/verify/[id]/voice-result`
 
 **Request Body:**
 ```json
@@ -195,11 +195,11 @@ The SDK requires the host application to implement the following three server-si
 }
 ```
 
-## VAPI Integration
+## VoiceAPI Integration
 
 ### Assistant Configuration
 
-The SDK uses VAPI to handle voice conversations. The assistant is configured with:
+The SDK uses VoiceAPI to handle voice conversations. The assistant is configured with:
 
 ```typescript
 const assistantConfig = {
@@ -218,7 +218,7 @@ const assistantConfig = {
     `
   },
   voice: {
-    provider: "elevenlabs",
+    provider: "voice-service",
     voiceId: "rachel"
   },
   transcriber: {
@@ -228,7 +228,7 @@ const assistantConfig = {
 }
 ```
 
-### What VAPI Handles
+### What VoiceAPI Handles
 
 ✅ **Microphone access and permissions**
 ✅ **Speech-to-text processing**
@@ -382,5 +382,5 @@ The SDK is built with:
 1. **Unit Tests**: Core SDK functionality
 2. **Integration Tests**: API endpoint interactions
 3. **E2E Tests**: Full verification flow
-4. **Mock Testing**: VAPI integration mocking
+4. **Mock Testing**: VoiceAPI integration mocking
 5. **Error Scenarios**: Comprehensive error handling tests

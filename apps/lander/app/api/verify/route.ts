@@ -54,27 +54,8 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Create ElevenLabs Agents Platform session
-		const elevenLabsApiKey = process.env.ELEVENLABS_API_KEY;
-		const elevenLabsAgentId = process.env.ELEVENLABS_AGENT_ID;
-
-		if (!elevenLabsApiKey) {
-			throw new Error(
-				"ELEVENLABS_API_KEY not found in environment variables. Please set it in your .env.local file.",
-			);
-		}
-
-		if (!elevenLabsAgentId) {
-			throw new Error(
-				"ELEVENLABS_AGENT_ID not found in environment variables. Please set it in your .env.local file.",
-			);
-		}
-
-		// Create ElevenLabs Agents Platform session
-		console.log(
-			"Creating ElevenLabs Agents Platform session for email:",
-			email,
-		);
+		// Create verification session
+		console.log("Creating verification session for email:", email);
 
 		// SECURE APPROACH: Generate a short-lived token for the frontend
 		const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -88,11 +69,8 @@ export async function POST(request: NextRequest) {
 		// For now, return the session info
 		// TODO: Replace with actual JWT token generation
 		const secureToken = {
-			agentId: elevenLabsAgentId,
 			sessionId: sessionId,
 			expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
-			// Include the ElevenLabs API key in the token so the SDK can use it internally
-			elevenLabsApiKey: elevenLabsApiKey,
 			// In production, this would be a signed JWT
 		};
 
@@ -100,10 +78,9 @@ export async function POST(request: NextRequest) {
 			{
 				verified: true,
 				sessionId: sessionId,
-				// Frontend should use this token to authenticate with ElevenLabs Agents Platform
+				// Frontend should use this token for verification
 				token: Buffer.from(JSON.stringify(secureToken)).toString("base64"),
-				transcript:
-					"ElevenLabs Agents Platform voice verification session created",
+				transcript: "Voice verification session created",
 			},
 			{ headers: corsHeaders },
 		);
@@ -111,7 +88,7 @@ export async function POST(request: NextRequest) {
 		console.error("Error in verify API:", error);
 
 		return NextResponse.json(
-			{ error: "Failed to create ElevenLabs verification session" },
+			{ error: "Failed to create verification session" },
 			{ status: 500, headers: corsHeaders },
 		);
 	}

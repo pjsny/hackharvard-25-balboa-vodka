@@ -59,15 +59,6 @@ export interface VerificationDetails {
 	backgroundNoise?: number;
 }
 
-/**
- * Submit ElevenLabs Result Request
- */
-export interface SubmitElevenLabsResultRequest {
-	callId: string;
-	recording: string;
-	transcript: string;
-	summary?: string;
-}
 
 /**
  * Verification Session Data (from your backend)
@@ -80,7 +71,6 @@ export interface VerificationSession {
 	updatedAt: string;
 	result?: VerificationResult;
 	error?: string;
-	elevenLabsCallId?: string;
 	recordingUrl?: string;
 	transcript?: string;
 }
@@ -116,9 +106,3 @@ export const CreateVerificationSchema = z.object({
 	email: z.string().email(),
 });
 
-export const SubmitElevenLabsResultSchema = z.object({
-	callId: z.string().min(1),
-	recording: z.string().min(1),
-	transcript: z.string().min(1),
-	summary: z.string().optional(),
-});
