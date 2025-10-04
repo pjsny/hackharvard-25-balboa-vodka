@@ -58,7 +58,7 @@ importers:
         specifier: 2.1.1
         version: 2.1.1
 
-  apps/docs:
+  apps/lander:
     dependencies:
       '@repo/ui':
         specifier: workspace:*
