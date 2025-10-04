@@ -1,6 +1,6 @@
 "use client";
 
-import { useBalboaVerification } from "@balboa/web";
+import { useBalboaVerification, VoiceVerificationDialog } from "@balboa/web";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { VoiceVerificationDialog } from "@/components/VoiceVerificationDialog";
 import { useCart } from "@/contexts/CartContext";
 import type { CartItem, CheckoutData, FraudRisk } from "@/types";
 

@@ -1,6 +1,7 @@
 // Main SDK exports
 // Default export for convenience
 export { BalboaWebClient, BalboaWebClient as default } from "./client";
+export { VoiceVerificationDialog } from "./components/VoiceVerificationDialog";
 export { useBalboa, verifyWithBalboa } from "./hooks";
 export { useBalboaVerification } from "./hooks/useBalboaVerification";
 // Type exports
