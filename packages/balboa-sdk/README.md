@@ -20,7 +20,6 @@ pnpm add @balboa/sdk
 import { BalboaClient } from '@balboa/sdk'
 
 const client = new BalboaClient({
-  apiKey: 'your-api-key',
   baseUrl: 'https://api.balboa.vodka'
 })
 

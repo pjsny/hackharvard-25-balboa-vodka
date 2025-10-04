@@ -176,7 +176,6 @@ export class BalboaClient {
 		const fullUrl = `${this.config.baseUrl}${url}`;
 		const requestOptions: RequestInit = {
 			headers: {
-				Authorization: `Bearer ${this.config.apiKey}`,
 				"Content-Type": "application/json",
 				...options.headers,
 			},
@@ -241,9 +240,6 @@ export class BalboaClient {
 	 * Validate configuration
 	 */
 	private validateConfig(config: BalboaConfig): void {
-		if (!config.apiKey) {
-			throw createBalboaError("API key is required", "INVALID_CONFIG");
-		}
 		if (!config.baseUrl) {
 			throw createBalboaError("Base URL is required", "INVALID_CONFIG");
 		}

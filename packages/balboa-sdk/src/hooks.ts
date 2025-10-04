@@ -30,8 +30,7 @@ export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 			try {
 				// Create client with config or use default
 				const clientConfig = config || {
-					apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY || "",
-					baseUrl: process.env.NEXT_PUBLIC_BALBOA_API_URL || "",
+					baseUrl: "http://localhost:3000",
 					environment: "production",
 				};
 
@@ -85,8 +84,7 @@ export async function verifyWithBalboa(
 	config?: BalboaConfig,
 ): Promise<VerificationResult> {
 	const clientConfig = config || {
-		apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY || "",
-		baseUrl: process.env.NEXT_PUBLIC_BALBOA_API_URL || "",
+		baseUrl: "http://localhost:3000",
 		environment: "production",
 	};
 

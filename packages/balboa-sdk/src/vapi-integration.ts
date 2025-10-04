@@ -1,51 +1,17 @@
+import Vapi from "@vapi-ai/web";
 import { createBalboaError } from "./errors";
 import type { BalboaConfig, VapiCallResult } from "./types";
-
-/**
- * Mock VAPI class for development
- */
-class MockVapi {
-	constructor(private apiKey: string) {}
-
-	async start(config: any): Promise<void> {
-		// Mock implementation - in real implementation this would start VAPI call
-		console.log("Mock VAPI start called with config:", config);
-	}
-
-	on(event: string, callback: (data: any) => void): void {
-		// Mock implementation - simulate call events
-		if (event === "call-ended") {
-			setTimeout(() => {
-				callback({
-					id: "mock-call-id",
-					recording: "mock-recording-url",
-					transcript: "Balboa verification complete",
-					summary: "User successfully verified",
-					duration: 15,
-				});
-			}, 2000); // Simulate 2 second call
-		}
-	}
-
-	async stop(): Promise<void> {
-		console.log("Mock VAPI stop called");
-	}
-
-	isCallActive(): boolean {
-		return false;
-	}
-}
 
 /**
  * VAPI integration for voice conversations
  */
 export class BalboaVapiIntegration {
-	private vapi: MockVapi;
+	private vapi: Vapi;
 	private config: BalboaConfig;
 
 	constructor(config: BalboaConfig) {
 		this.config = config;
-		this.vapi = new MockVapi(config.apiKey);
+		this.vapi = new Vapi(config.apiKey || "mock-vapi-key");
 	}
 
 	/**
@@ -56,16 +22,16 @@ export class BalboaVapiIntegration {
 			// Configure the assistant for Balboa verification
 			const assistantConfig = {
 				model: {
-					provider: "openai",
-					model: "gpt-4",
+					provider: "openai" as const,
+					model: "gpt-4" as const,
 					systemMessage: this.getSystemMessage(),
 				},
 				voice: {
-					provider: "elevenlabs",
+					provider: "elevenlabs" as const,
 					voiceId: "rachel", // Professional, clear voice
 				},
 				transcriber: {
-					provider: "deepgram",
+					provider: "deepgram" as const,
 					model: "nova-2",
 				},
 				// Add session metadata
@@ -73,14 +39,14 @@ export class BalboaVapiIntegration {
 					sessionId,
 					environment: this.config.environment || "production",
 				},
-			};
+			} as any;
 
 			// Start the conversation
-			await this.vapi.start(assistantConfig);
+			const call = await this.vapi.start(assistantConfig);
 
 			// Wait for call completion
 			return new Promise((resolve, reject) => {
-				this.vapi.on("call-ended", (callData) => {
+				this.vapi.on("callEnded" as any, (callData: any) => {
 					resolve({
 						callId: callData.id,
 						recording: callData.recording || "",
@@ -90,7 +56,7 @@ export class BalboaVapiIntegration {
 					});
 				});
 
-				this.vapi.on("error", (error) => {
+				this.vapi.on("error" as any, (error: any) => {
 					reject(
 						createBalboaError(
 							`VAPI call failed: ${error.message}`,
@@ -155,7 +121,7 @@ export class BalboaVapiIntegration {
 	 * Check if a call is currently active
 	 */
 	isCallActive(): boolean {
-		return this.vapi.isCallActive();
+		return (this.vapi as any).isCallActive?.() || false;
 	}
 }
 

@@ -27,7 +27,9 @@
 	"peerDependencies": {
 		"react": "^18"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"@vapi-ai/web": "^2.4.0"
+	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",

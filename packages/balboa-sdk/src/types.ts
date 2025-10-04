@@ -2,8 +2,8 @@
  * Configuration options for the Balboa SDK
  */
 export interface BalboaConfig {
-	/** API key for authenticating with Balboa services */
-	apiKey: string;
+	/** API key for authenticating with Balboa services (optional for development) */
+	apiKey?: string;
 	/** Base URL for the Balboa API */
 	baseUrl: string;
 	/** Environment (sandbox or production) */
