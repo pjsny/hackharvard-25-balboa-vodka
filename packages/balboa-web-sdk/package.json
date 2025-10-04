@@ -29,10 +29,10 @@
 		"react-dom": "^19"
 	},
 	"dependencies": {
-		"@vapi-ai/web": "^2.4.0",
 		"@radix-ui/react-dialog": "^1.1.15",
-		"lucide-react": "^0.468.0",
+		"@stitches/react": "^1.2.8",
 		"clsx": "^2.1.1",
+		"lucide-react": "^0.468.0",
 		"tailwind-merge": "^2.5.4"
 	},
 	"devDependencies": {

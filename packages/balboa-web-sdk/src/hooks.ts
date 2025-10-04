@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { BalboaWebClient } from "./client";
+import { BalboaError } from "./errors";
 import type {
 	BalboaConfig,
 	UseBalboaReturn,
@@ -9,10 +10,10 @@ import type {
 	VerificationResult,
 	VerificationStatus,
 } from "./types";
-import { BalboaError } from "./types";
 
 /**
  * React hook for Balboa voice verification
+ * Simplified hook that just handles session creation and status polling
  */
 export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 	const [state, setState] = useState<{
@@ -38,15 +39,12 @@ export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 
 				const client = new BalboaWebClient(clientConfig);
 
-				// Add progress callback
-				const optionsWithProgress = {
-					...options,
-					onProgress: (status: VerificationStatus) => {
-						setState((prev) => ({ ...prev, status }));
-					},
-				};
+				// Create verification session
+				const session = await client.createVerificationSession(options);
+				setState((prev) => ({ ...prev, status: "calling" }));
 
-				const result = await client.verifyWithBalboa(optionsWithProgress);
+				// Poll for verification status
+				const result = await pollForStatus(client, session.id);
 
 				setState({ status: "completed", result, error: null });
 				return result;
@@ -79,6 +77,57 @@ export function useBalboa(config?: BalboaConfig): UseBalboaReturn {
 }
 
 /**
+ * Poll for verification status with exponential backoff
+ */
+async function pollForStatus(
+	client: BalboaWebClient,
+	sessionId: string,
+): Promise<VerificationResult> {
+	const maxAttempts = 10;
+	const baseDelay = 1000; // 1 second
+	const maxDelay = 10000; // 10 seconds
+
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		try {
+			const result = await client.getVerificationStatus(sessionId);
+
+			if (result.success && result.verified !== null) {
+				return result;
+			}
+
+			// Calculate delay with exponential backoff
+			const delay = Math.min(baseDelay * 2 ** (attempt - 1), maxDelay);
+			console.log(
+				`⏳ Attempt ${attempt}/${maxAttempts} - waiting ${delay}ms before next poll`,
+			);
+
+			await sleep(delay);
+		} catch (error) {
+			console.error(`❌ Poll attempt ${attempt} failed:`, error);
+
+			if (attempt === maxAttempts) {
+				throw new BalboaError(
+					`Verification polling failed after ${maxAttempts} attempts`,
+				);
+			}
+
+			// Wait before retrying
+			const delay = Math.min(baseDelay * 2 ** (attempt - 1), maxDelay);
+			await sleep(delay);
+		}
+	}
+
+	throw new BalboaError("Verification polling timed out");
+}
+
+/**
+ * Sleep utility
+ */
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Simple function-based API for non-React usage
  */
 export async function verifyWithBalboa(
@@ -91,5 +140,10 @@ export async function verifyWithBalboa(
 	};
 
 	const client = new BalboaWebClient(clientConfig);
-	return client.verifyWithBalboa(options);
+
+	// Create verification session
+	const session = await client.createVerificationSession(options);
+
+	// Poll for verification status
+	return pollForStatus(client, session.id);
 }

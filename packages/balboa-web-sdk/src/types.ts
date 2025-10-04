@@ -18,10 +18,8 @@ export interface BalboaConfig {
  * Options for voice verification
  */
 export interface VerificationOptions {
-	/** Unique identifier for the transaction */
-	transactionId: string;
-	/** Customer and checkout data */
-	customerData: Record<string, unknown>;
+	/** Customer's email address for verification */
+	email: string;
 	/** Pre-calculated fraud risk score (0-100) */
 	riskLevel?: number;
 	/** Custom timeout in milliseconds */
@@ -103,20 +101,6 @@ export interface VerificationSession {
 	result?: VerificationResult;
 	/** Error message if failed */
 	error?: string;
-}
-
-/**
- * Balboa SDK error class
- */
-export class BalboaError extends Error {
-	constructor(
-		message: string,
-		public code?: string,
-		public originalError?: Error,
-	) {
-		super(message);
-		this.name = "BalboaError";
-	}
 }
 
 /**

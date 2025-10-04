@@ -2,6 +2,9 @@
 // Default export for convenience
 export { BalboaWebClient, BalboaWebClient as default } from "./client";
 export { VoiceVerificationDialog } from "./components/VoiceVerificationDialog";
+export { BalboaElevenLabsClient } from "./elevenlabs-client";
+// Error exports
+export { BalboaError } from "./errors";
 export { useBalboa, verifyWithBalboa } from "./hooks";
 export { useBalboaVerification } from "./hooks/useBalboaVerification";
 // Type exports
@@ -16,6 +19,3 @@ export type {
 	VerificationSession,
 	VerificationStatus,
 } from "./types";
-// Error exports
-export { BalboaError } from "./types";
-export { BalboaVapiIntegration } from "./vapi-integration";

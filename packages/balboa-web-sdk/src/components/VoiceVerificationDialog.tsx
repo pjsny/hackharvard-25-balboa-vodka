@@ -1,22 +1,39 @@
-"use client";
-
-import { CheckCircle, Loader2, Mic, XCircle } from "lucide-react";
-import { useState } from "react";
-import { useBalboa } from "../hooks";
+import { Dialog } from "@radix-ui/react-dialog";
+import { CheckCircle, Mic, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BalboaElevenLabsClient } from "../elevenlabs-client";
+import { Button } from "./styled/Button";
 import {
-	Dialog,
+	DialogCloseButton,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
+	DialogOverlay,
 	DialogTitle,
-} from "./ui/dialog";
+} from "./styled/Dialog";
+import { IconContainer, Spinner, StatusIcon } from "./styled/Icon";
+import {
+	ButtonGroup,
+	Container,
+	Divider,
+	FlexCol,
+	FlexRow,
+	Footer,
+	StatusDescription,
+	StatusDot,
+	StatusSection,
+	StatusTitle,
+	StepContainer,
+	StepItem,
+	StepList,
+	StepTitle,
+} from "./styled/Layout";
 
 interface VoiceVerificationDialogProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onSuccess: () => void;
-	transactionId: string;
-	customerData: Record<string, unknown>;
+	email: string;
 	riskLevel?: number;
 }
 
@@ -24,50 +41,369 @@ export function VoiceVerificationDialog({
 	isOpen,
 	onClose,
 	onSuccess,
-	transactionId,
-	customerData,
+	email,
 	riskLevel = 75,
 }: VoiceVerificationDialogProps) {
-	const { verifyWithBalboa, isLoading, result, error } = useBalboa();
 	const [isVerifying, setIsVerifying] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const [result, setResult] = useState<any>(null);
+	const [error, setError] = useState<any>(null);
+	const [elevenLabsClient, setElevenLabsClient] =
+		useState<BalboaElevenLabsClient | null>(null);
+	const [callStatus, setCallStatus] = useState<
+		"idle" | "user-speaking" | "llm-thinking" | "call-ended"
+	>("idle");
+	const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+	const [isLlmThinking, setIsLlmThinking] = useState(false);
+
+	// Cleanup ElevenLabs client when component unmounts or dialog closes
+	useEffect(() => {
+		return () => {
+			if (elevenLabsClient) {
+				elevenLabsClient.stopConversation();
+			}
+		};
+	}, [elevenLabsClient]);
+
+	// Cleanup when dialog closes - always end the call
+	useEffect(() => {
+		if (!isOpen && elevenLabsClient) {
+			elevenLabsClient.stopConversation();
+			setCallStatus("call-ended");
+			setIsVerifying(false);
+			setIsUserSpeaking(false);
+			setIsLlmThinking(false);
+		}
+	}, [isOpen, elevenLabsClient]);
 
 	const handleVerification = async () => {
-		setIsVerifying(true);
+		setIsLoading(true);
+		setError(null);
+
 		try {
-			const result = await verifyWithBalboa({
-				transactionId,
-				customerData,
-				riskLevel,
-				onProgress: (status) => {
-					console.log("Verification status:", status);
+			// First, get the secure token from the backend
+			const response = await fetch("http://localhost:3000/api/verify", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
 				},
+				body: JSON.stringify({
+					email: email,
+				}),
 			});
 
-			if (result.success && result.verified) {
-				onSuccess();
+			const data = await response.json();
+
+			if (data.verified && data.token) {
+				// Decode the secure token from backend
+				const tokenData = JSON.parse(atob(data.token));
+
+				// Check if token is expired
+				if (tokenData.expiresAt < Date.now()) {
+					throw new Error("Verification token has expired");
+				}
+
+				// Initialize the SDK's internal ElevenLabs client
+				console.log(
+					"🔧 Initializing ElevenLabs Agents Platform with API key:",
+					tokenData.elevenLabsApiKey.substring(0, 10) + "...",
+				);
+				console.log("🤖 Agent ID:", tokenData.agentId);
+
+				const client = new BalboaElevenLabsClient();
+				await client.initialize(tokenData.elevenLabsApiKey, tokenData.agentId);
+				console.log(
+					"✅ ElevenLabs Agents Platform client initialized successfully",
+				);
+
+				// Check if client is ready
+				const isReady = client.isReady();
+				console.log("🔍 Client ready status:", isReady);
+
+				if (!isReady) {
+					throw new Error("ElevenLabs client is not ready");
+				}
+
+				// Debug: Check ElevenLabs instance status
+				console.log("🔍 ElevenLabs client status:", client.getStatus());
+
+				// Test ElevenLabs instance functionality
+				const elevenLabsTestResult = await client.testElevenLabsInstance();
+				console.log("🧪 ElevenLabs test result:", elevenLabsTestResult);
+
+				if (!elevenLabsTestResult) {
+					throw new Error("ElevenLabs instance test failed");
+				}
+
+				// Set up event listeners with more detailed logging
+				client.on("call-start", (callData) => {
+					console.log("🎤 ElevenLabs conversation started:", callData);
+					setIsVerifying(true);
+					setIsLoading(false); // Stop loading when call starts
+					setCallStatus("llm-thinking"); // Initially LLM is thinking
+				});
+
+				client.on("call-end", (callData) => {
+					console.log("🔚 ElevenLabs conversation ended:", callData);
+					setIsVerifying(false);
+					setCallStatus("call-ended");
+					setIsUserSpeaking(false);
+					setIsLlmThinking(false);
+
+					// Check if the call was successful
+					if (callData && callData.agentId) {
+						setResult({
+							verified: true,
+							confidence: 0.95,
+							sessionId: data.sessionId,
+							transcript: "Voice verification completed",
+						});
+					}
+				});
+
+				client.on("message", (message) => {
+					console.log("💬 ElevenLabs message:", message);
+
+					// Handle different message types
+					if (message.type === "transcript") {
+						console.log(`📝 ${message.role}: ${message.transcript}`);
+
+						// If the assistant says something that indicates success
+						if (
+							message.role === "assistant" &&
+							(message.transcript.toLowerCase().includes("verified") ||
+								message.transcript.toLowerCase().includes("success") ||
+								message.transcript.toLowerCase().includes("complete"))
+						) {
+							console.log("✅ Assistant indicated success!");
+							setResult({
+								verified: true,
+								confidence: 0.95,
+								sessionId: data.sessionId,
+								transcript: message.transcript,
+							});
+							setIsVerifying(false);
+							setCallStatus("call-ended");
+						}
+					}
+
+					// Handle speech updates - this is what we're seeing in the console
+					if (message.type === "speech-update") {
+						console.log("🗣️ Speech update:", message);
+
+						// Ensure message has required properties
+						if (!message.status || !message.role) {
+							console.warn(
+								"⚠️ Speech update missing required properties:",
+								message,
+							);
+							return;
+						}
+
+						// When user starts speaking
+						if (message.status === "started" && message.role === "user") {
+							console.log("🎤 User started speaking");
+							setIsUserSpeaking(true);
+							setIsLlmThinking(false);
+							setCallStatus("user-speaking");
+						}
+
+						// When user stops speaking
+						if (message.status === "stopped" && message.role === "user") {
+							console.log("🔇 User stopped speaking");
+							setIsUserSpeaking(false);
+							setIsLlmThinking(true);
+							setCallStatus("llm-thinking");
+						}
+
+						// When assistant starts speaking
+						if (message.status === "started" && message.role === "assistant") {
+							console.log("🎤 Assistant started speaking");
+							setIsVerifying(true);
+							setIsLoading(false);
+							setIsLlmThinking(false);
+							setCallStatus("llm-thinking"); // Assistant speaking
+						}
+
+						// When assistant stops speaking, it's now listening to user
+						if (message.status === "stopped" && message.role === "assistant") {
+							console.log("🔇 Assistant stopped speaking - now listening");
+							setIsLlmThinking(false);
+							setCallStatus("idle"); // Assistant is listening, not thinking
+							// Don't end the call - let it continue for user response
+						}
+					}
+
+					// Handle conversation updates
+					if (message.type === "conversation-update") {
+						console.log("💬 Conversation update:", message);
+					}
+				});
+
+				client.on("error", (error) => {
+					console.error("❌ VAPI error:", error);
+					setError(
+						new Error(`Voice verification failed: ${error.message || error}`),
+					);
+					setIsVerifying(false);
+					setIsLoading(false);
+					setCallStatus("call-ended");
+					setIsUserSpeaking(false);
+					setIsLlmThinking(false);
+				});
+
+				// Add volume level listener for debugging
+				client.on("volume-level", (level) => {
+					console.log("📊 Volume level:", level);
+				});
+
+				setElevenLabsClient(client);
+				console.log("✅ Event listeners set up and client stored");
+
+				// Start ElevenLabs Agents Platform voice conversation
+				console.log(
+					"🚀 Starting ElevenLabs conversation with agent:",
+					tokenData.agentId,
+				);
+
+				try {
+					await client.startConversation();
+					console.log("ElevenLabs conversation started successfully");
+
+					// Set a timeout to detect if call doesn't start properly
+					const startTimeout = setTimeout(() => {
+						if (!isVerifying) {
+							console.warn(
+								"⚠️ VAPI call didn't start within 5 seconds - checking assistant configuration",
+							);
+							setError(
+								new Error(
+									"Voice verification didn't start. Please check your microphone permissions and try again.",
+								),
+							);
+							setIsLoading(false);
+						}
+					}, 5000);
+
+					// Set a longer timeout to detect if call gets stuck
+					const stuckTimeout = setTimeout(() => {
+						if (isVerifying) {
+							console.warn(
+								"⚠️ VAPI call seems stuck - assistant might not be responding",
+							);
+							setError(
+								new Error(
+									"Voice verification is taking too long. The assistant might not be responding properly.",
+								),
+							);
+							setIsVerifying(false);
+							setIsLoading(false);
+						}
+					}, 30000); // 30 seconds
+
+					// Clear timeouts when call actually starts
+					const originalCallStart = client.on;
+					client.on = function (
+						event: string,
+						callback: (...args: any[]) => void,
+					) {
+						if (event === "call-start") {
+							const wrappedCallback = (...args: any[]) => {
+								clearTimeout(startTimeout);
+								clearTimeout(stuckTimeout);
+								callback(...args);
+							};
+							return originalCallStart.call(this, event, wrappedCallback);
+						}
+						return originalCallStart.call(this, event, callback);
+					};
+				} catch (elevenLabsError) {
+					console.error(
+						"Failed to start ElevenLabs conversation:",
+						elevenLabsError,
+					);
+					const errorMessage =
+						elevenLabsError instanceof Error
+							? elevenLabsError.message
+							: String(elevenLabsError);
+					throw new Error(`ElevenLabs conversation failed: ${errorMessage}`);
+				}
+			} else {
+				throw new Error("Failed to get agent ID from backend");
 			}
 		} catch (error) {
 			console.error("Verification failed:", error);
-		} finally {
-			setIsVerifying(false);
+			setError(error);
+			setIsLoading(false);
 		}
 	};
 
 	const getStatusIcon = () => {
-		if (isLoading || isVerifying) {
-			return <Loader2 className="w-8 h-8 animate-spin text-blue-600" />;
+		if (callStatus === "call-ended") {
+			return (
+				<IconContainer status="call-ended">
+					<StatusIcon color="red">
+						<XCircle size={20} />
+					</StatusIcon>
+				</IconContainer>
+			);
+		}
+		if (callStatus === "user-speaking") {
+			return (
+				<IconContainer status="user-speaking">
+					<StatusIcon color="green" animated>
+						<Mic size={20} />
+					</StatusIcon>
+				</IconContainer>
+			);
+		}
+		if (callStatus === "llm-thinking") {
+			return (
+				<IconContainer status="llm-thinking">
+					<StatusIcon color="blue" animated>
+						<Mic size={20} />
+					</StatusIcon>
+				</IconContainer>
+			);
 		}
 		if (result?.verified) {
-			return <CheckCircle className="w-8 h-8 text-green-600" />;
+			return (
+				<IconContainer status="success">
+					<StatusIcon color="green">
+						<CheckCircle size={20} />
+					</StatusIcon>
+				</IconContainer>
+			);
 		}
 		if (error) {
-			return <XCircle className="w-8 h-8 text-red-600" />;
+			return (
+				<IconContainer status="error">
+					<StatusIcon color="red">
+						<XCircle size={20} />
+					</StatusIcon>
+				</IconContainer>
+			);
 		}
-		return <Mic className="w-8 h-8 text-gray-400" />;
+		return (
+			<IconContainer status="idle">
+				<StatusIcon color="gray">
+					<Mic size={20} />
+				</StatusIcon>
+			</IconContainer>
+		);
 	};
 
 	const getStatusText = () => {
-		if (isLoading || isVerifying) {
+		if (callStatus === "call-ended") {
+			return "Call ended successfully";
+		}
+		if (callStatus === "user-speaking") {
+			return "You are speaking...";
+		}
+		if (callStatus === "llm-thinking") {
+			return "Assistant is speaking...";
+		}
+		if (isLoading) {
 			return "Starting voice verification...";
 		}
 		if (result?.verified) {
@@ -76,11 +412,20 @@ export function VoiceVerificationDialog({
 		if (error) {
 			return "Verification failed. Please try again.";
 		}
-		return "Ready to verify your identity";
+		return "Listening...";
 	};
 
 	const getStatusDescription = () => {
-		if (isLoading || isVerifying) {
+		if (callStatus === "call-ended") {
+			return "The voice verification call has been completed.";
+		}
+		if (callStatus === "user-speaking") {
+			return "Please continue speaking naturally.";
+		}
+		if (callStatus === "llm-thinking") {
+			return "The assistant is speaking to you.";
+		}
+		if (isLoading) {
 			return "Please wait while we prepare the voice verification system.";
 		}
 		if (result?.verified) {
@@ -91,136 +436,157 @@ export function VoiceVerificationDialog({
 		if (error) {
 			return "There was an issue with the verification process.";
 		}
-		return "Click the button below to start voice verification.";
+		return "The assistant is listening for your response.";
 	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-md">
+			<DialogOverlay />
+			<DialogContent>
 				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
-						<span className="text-2xl">🎤</span>
-						Voice Verification Required
-					</DialogTitle>
+					<DialogTitle>Voice Verification</DialogTitle>
 					<DialogDescription>
-						High-risk transaction detected. Please complete voice verification
-						to proceed with your purchase.
+						Complete your secure purchase with voice verification
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="space-y-6">
-					{/* Risk Assessment */}
-					<div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-						<h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-							Risk Assessment Results
-						</h3>
-						<p className="text-sm text-yellow-700 dark:text-yellow-300">
-							Risk Score: {riskLevel}% - Multiple risk factors detected
-						</p>
-					</div>
+				<Container>
+					{/* Progress Steps */}
+					<FlexRow>
+						{/* Step 1: Get started */}
+						<StepContainer>
+							<IconContainer status="idle">
+								<StatusIcon color="gray">
+									<Mic size={20} />
+								</StatusIcon>
+							</IconContainer>
+							<StepTitle>Get started.</StepTitle>
+							<StepList>
+								<StepItem>
+									<StatusDot status="active" />
+									<span>Connect to voice verification</span>
+								</StepItem>
+								<StepItem>
+									<StatusDot status="active" />
+									<span>Enable microphone access</span>
+								</StepItem>
+								<StepItem>
+									<StatusDot status="active" />
+									<span>Start verification process</span>
+								</StepItem>
+							</StepList>
+						</StepContainer>
 
-					{/* Verification Status */}
-					<div className="text-center space-y-4">
-						<div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+						<Divider />
+
+						{/* Step 2: Get comfortable */}
+						<StepContainer>
 							{getStatusIcon()}
-						</div>
-						<div>
-							<h3 className="text-lg font-semibold">{getStatusText()}</h3>
-							<p className="text-sm text-muted-foreground">
-								{getStatusDescription()}
-							</p>
-						</div>
-					</div>
+							<StepTitle>Get comfortable.</StepTitle>
+							<StepList>
+								<StepItem>
+									<StatusDot status="active" />
+									<span>Listen to assistant prompts</span>
+								</StepItem>
+								<StepItem>
+									<StatusDot status="active" />
+									<span>Respond naturally</span>
+								</StepItem>
+								<StepItem>
+									<StatusDot status="active" />
+									<span>Complete verification</span>
+								</StepItem>
+							</StepList>
+						</StepContainer>
 
-					{/* Verification Details */}
-					{result && (
-						<div className="border rounded-lg p-4">
-							<h4 className="font-semibold mb-2">Verification Details</h4>
-							<div className="space-y-2 text-sm">
-								<div className="flex justify-between">
-									<span>Confidence Score:</span>
-									<span className="font-mono">
-										{Math.round((result.confidence || 0) * 100)}%
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span>Session ID:</span>
-									<span className="font-mono text-xs">
-										{result.sessionId.slice(0, 8)}...
-									</span>
-								</div>
-								{result.details && (
-									<>
-										{result.details.phraseAccuracy && (
-											<div className="flex justify-between">
-												<span>Phrase Accuracy:</span>
-												<span className="font-mono">
-													{Math.round(result.details.phraseAccuracy * 100)}%
-												</span>
-											</div>
-										)}
-										{result.details.voiceMatch && (
-											<div className="flex justify-between">
-												<span>Voice Match:</span>
-												<span className="font-mono">
-													{Math.round(result.details.voiceMatch * 100)}%
-												</span>
-											</div>
-										)}
-									</>
-								)}
-							</div>
-						</div>
-					)}
+						<Divider />
+
+						{/* Step 3: Complete */}
+						<StepContainer>
+							<IconContainer status={result?.verified ? "success" : "idle"}>
+								<StatusIcon color={result?.verified ? "green" : "gray"}>
+									<CheckCircle size={20} />
+								</StatusIcon>
+							</IconContainer>
+							<StepTitle>Complete.</StepTitle>
+							<StepList>
+								<StepItem>
+									<StatusDot
+										status={result?.verified ? "active" : "inactive"}
+									/>
+									<span>Verification successful</span>
+								</StepItem>
+								<StepItem>
+									<StatusDot
+										status={result?.verified ? "active" : "inactive"}
+									/>
+									<span>Transaction approved</span>
+								</StepItem>
+								<StepItem>
+									<StatusDot
+										status={result?.verified ? "active" : "inactive"}
+									/>
+									<span>Continue to payment</span>
+								</StepItem>
+							</StepList>
+						</StepContainer>
+					</FlexRow>
+
+					{/* Status Message */}
+					<StatusSection>
+						<StatusTitle>{getStatusText()}</StatusTitle>
+						<StatusDescription>{getStatusDescription()}</StatusDescription>
+					</StatusSection>
 
 					{/* Action Buttons */}
-					<div className="flex gap-3">
-						{!result?.verified && (
-							<button
+					<ButtonGroup>
+						{!result?.verified && callStatus !== "call-ended" && (
+							<Button
 								onClick={handleVerification}
 								disabled={isLoading || isVerifying}
-								className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+								variant="secondary"
+								size="md"
+								fullWidth
 							>
-								{isLoading || isVerifying ? (
+								{isLoading ? (
 									<>
-										<Loader2 className="w-4 h-4 animate-spin" />
-										Verifying...
+										<Spinner />
+										Starting...
 									</>
 								) : (
 									<>
-										<Mic className="w-4 h-4" />
+										<Mic size={16} />
 										Start Voice Verification
 									</>
 								)}
-							</button>
+							</Button>
 						)}
 
 						{result?.verified && (
-							<button
-								onClick={onSuccess}
-								className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-							>
-								<CheckCircle className="w-4 h-4" />
+							<Button onClick={onSuccess} variant="success" size="md" fullWidth>
+								<CheckCircle size={16} />
 								Continue to Payment
-							</button>
+							</Button>
 						)}
 
-						<button
+						<Button
 							onClick={onClose}
-							disabled={isLoading || isVerifying}
-							className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+							disabled={isLoading}
+							variant="secondary"
+							size="md"
 						>
-							Cancel
-						</button>
-					</div>
+							{callStatus === "call-ended" ? "Close" : "Cancel"}
+						</Button>
+					</ButtonGroup>
 
-					{/* Instructions */}
-					<div className="text-xs text-muted-foreground text-center space-y-1">
-						<p>✓ Secret phrase verification</p>
-						<p>✓ Voice embedding similarity check</p>
-						<p>✓ Audio fingerprint validation</p>
-					</div>
-				</div>
+					{/* Footer */}
+					<Footer>
+						<p>
+							Three* ways we secure your transaction with voice verification.
+						</p>
+						<p>*there are many more, but we thought we'd ease you into it.</p>
+					</Footer>
+				</Container>
 			</DialogContent>
 		</Dialog>
 	);
