@@ -103,16 +103,20 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
     }
 
     // TODO: Retrieve stored OTP from database/cache
-    const storedOTP = await redis.get(`otp:${email}`);
-    
+    const storedOTP = await redis.get(`otp:${email}`) as string | null;
+    console.log("Stored OTP:", storedOTP);
+    console.log("OTP:", otp);
     // TODO: Verify OTP matches and hasn't expired
-    if (!storedOTP || storedOTP !== otp) {
+    console.log("Stored OTP:", !storedOTP, storedOTP?.trim() !== otp.trim());
+    if (!storedOTP || storedOTP.trim() !== otp.trim()) {
       return {
         success: false,
         message: "Invalid or expired verification code",
         error: "INVALID_OTP"
       };
     }
+
+    console.log("OTP verified");
 
     // TODO: Create or update user in database
     // const user = await createOrUpdateUser({
