@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
+import { Button } from "~/components/ui/button";
 import { sendOTP, verifyOTP } from "~/lib/auth-actions";
 import { useState } from "react";
 

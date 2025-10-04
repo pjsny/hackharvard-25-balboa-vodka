@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
-import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
 import { Trophy, Users, Calendar, Code, Sparkles, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
