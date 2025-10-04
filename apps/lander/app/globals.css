@@ -24,6 +24,20 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    
+    /* Professional Balboa Theme */
+    --balboa-primary: 0 0% 8%;
+    --balboa-secondary: 0 0% 15%;
+    --balboa-accent: 45 100% 50%;
+    --balboa-accent-dark: 45 100% 40%;
+    --balboa-danger: 0 84% 60%;
+    --balboa-success: 142 76% 36%;
+    --balboa-surface: 0 0% 6%;
+    --balboa-surface-elevated: 0 0% 10%;
+    --balboa-border: 0 0% 20%;
+    --balboa-text-primary: 0 0% 95%;
+    --balboa-text-secondary: 0 0% 70%;
+    --balboa-text-muted: 0 0% 50%;
   }
 
   .dark {
@@ -58,7 +72,50 @@
   }
 }
 
-@keyframes shimmer {
+/* Professional Animations */
+@keyframes subtle-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes professional-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.2);
+  }
+  50% {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 8px rgba(255, 193, 7, 0);
+  }
+}
+
+@keyframes smooth-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes success-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+  }
+}
+
+@keyframes accent-shimmer {
   0% {
     background-position: -200% 0;
   }
@@ -67,45 +124,56 @@
   }
 }
 
-@keyframes rocky-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 20px rgba(234, 179, 8, 0.5);
+@keyframes loading-spinner {
+  0% {
+    transform: rotate(0deg);
   }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 40px rgba(234, 179, 8, 0.8);
+  100% {
+    transform: rotate(360deg);
   }
 }
 
-@keyframes fight-glow {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
+/* Professional Utility Classes */
+.balboa-gradient {
+  background: linear-gradient(135deg, hsl(var(--balboa-primary)) 0%, hsl(var(--balboa-secondary)) 100%);
 }
 
-@keyframes victory-bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
+.balboa-accent-gradient {
+  background: linear-gradient(135deg, hsl(var(--balboa-accent)) 0%, hsl(var(--balboa-accent-dark)) 100%);
 }
 
-@keyframes corner-post-glow {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(234, 179, 8, 0.8), 0 0 30px rgba(234, 179, 8, 0.6);
-  }
+.balboa-surface {
+  background: hsl(var(--balboa-surface));
+}
+
+.balboa-surface-elevated {
+  background: hsl(var(--balboa-surface-elevated));
+}
+
+.balboa-border {
+  border-color: hsl(var(--balboa-border));
+}
+
+.balboa-text-primary {
+  color: hsl(var(--balboa-text-primary));
+}
+
+.balboa-text-secondary {
+  color: hsl(var(--balboa-text-secondary));
+}
+
+.balboa-text-muted {
+  color: hsl(var(--balboa-text-muted));
+}
+
+.balboa-accent {
+  color: hsl(var(--balboa-accent));
+}
+
+.balboa-danger {
+  color: hsl(var(--balboa-danger));
+}
+
+.balboa-success {
+  color: hsl(var(--balboa-success));
 }

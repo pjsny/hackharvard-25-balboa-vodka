@@ -85,223 +85,189 @@ export default function OnboardingPage(): JSX.Element {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Rocky Background with boxing ring aesthetic */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-900 via-red-800 to-black">
-        {/* Boxing ring ropes effect */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-          <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-          <div className="absolute top-0 right-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-          <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
+      {/* Professional Background */}
+      <div className="absolute inset-0 balboa-gradient">
+        {/* Subtle accent lines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-balboa-accent to-transparent"></div>
+          <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-transparent via-balboa-accent to-transparent"></div>
+          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-balboa-accent to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-balboa-accent to-transparent"></div>
         </div>
         
-        {/* Corner posts */}
-        <div className="absolute top-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow"></div>
-        <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '0.5s'}}></div>
-        <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1.5s'}}></div>
+        {/* Subtle corner accents */}
+        <div className="absolute top-4 left-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow"></div>
+        <div className="absolute top-4 right-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '0.5s'}}></div>
+        <div className="absolute bottom-4 left-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-4 right-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '1.5s'}}></div>
       </div>
 
       {/* Main content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="max-w-4xl mx-auto text-center">
           
-          {/* Rocky Title */}
+          {/* Friendly Title */}
           <div className="mb-12">
-            <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 mb-4 tracking-wider transform hover:scale-105 transition-transform duration-300">
+            <h1 className="text-6xl font-bold balboa-text-primary mb-4 tracking-wide">
               BALBOA
             </h1>
-            <div className="text-3xl font-bold text-white mb-2 tracking-widest">
+            <div className="text-2xl font-semibold balboa-text-secondary mb-2 tracking-wide">
               VOICE VERIFICATION
             </div>
-            <div className="w-32 h-1 bg-gradient-to-r from-yellow-400 to-red-500 mx-auto mb-6"></div>
-            <p className="text-xl text-gray-300 font-semibold max-w-2xl mx-auto leading-relaxed">
-              Step into the ring. Your voice is your weapon. 
-              <span className="text-yellow-400 font-bold"> FIGHT FOR YOUR SECURITY.</span>
+            <div className="w-24 h-px bg-gradient-to-r from-transparent via-balboa-accent to-transparent mx-auto mb-6"></div>
+            <p className="text-lg balboa-text-secondary font-medium max-w-2xl mx-auto leading-relaxed">
+              Welcome! Let's set up your voice verification. This quick process will help secure your account with your unique voice pattern.
+            </p>
+            <p className="text-base balboa-text-muted font-medium max-w-xl mx-auto leading-relaxed mt-4">
+              Simply speak naturally when prompted - we'll guide you through each step.
             </p>
           </div>
             
           {/* Call Control Buttons */}
           <div className="flex flex-col items-center space-y-8">
             {status === 'connecting' ? (
-              // Connecting State - Rocky Training Montage Style
+              // Connecting State - Professional Loading
               <div className="flex flex-col items-center space-y-6">
                 <div className="relative">
                   <Button 
                     disabled
-                    className="relative bg-gradient-to-r from-red-600 to-red-800 text-white font-black py-8 px-16 text-2xl rounded-none border-4 border-yellow-400 shadow-2xl transition-all duration-300 transform hover:scale-105"
-                    style={{
-                      boxShadow: '0 0 40px rgba(220, 38, 38, 0.8), 0 0 80px rgba(220, 38, 38, 0.6), 0 0 120px rgba(220, 38, 38, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.3)',
-                      animation: 'pulse 1.5s infinite'
-                    }}
+                    className="relative balboa-surface-elevated border balboa-border balboa-text-primary font-semibold py-6 px-12 text-lg rounded-lg shadow-lg transition-all duration-300"
                   >
                     <span className="relative z-10 flex items-center space-x-3">
-                      <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="tracking-wider">TRAINING...</span>
+                      <div className="w-6 h-6 border-2 border-balboa-accent border-t-transparent rounded-full animate-loading-spinner"></div>
+                      <span className="tracking-wide">CONNECTING...</span>
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-700 opacity-50 animate-pulse"></div>
                   </Button>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg font-bold text-yellow-400 tracking-wider">
-                    🥊 PREPARING FOR BATTLE 🥊
+                  <p className="text-lg font-semibold balboa-accent tracking-wide">
+                    ESTABLISHING SECURE CONNECTION
                   </p>
-                  <p className="text-sm font-medium text-gray-300 mt-2">
-                    Establishing voice connection...
+                  <p className="text-sm font-medium balboa-text-muted mt-2">
+                    Initializing voice verification protocol...
                   </p>
                 </div>
               </div>
               ) : !isCallActive ? (
-                // Start Call Button - Rocky's Entrance
+                // Start Call Button - Professional Design
                 <div className="relative">
                   <Button 
                     onClick={startElevenLabsCall}
-                    className="relative bg-gradient-to-r from-yellow-500 via-red-600 to-yellow-500 text-black font-black py-10 px-20 text-3xl rounded-none border-4 border-yellow-300 shadow-2xl transition-all duration-300 transform hover:scale-110 focus:outline-none z-20"
-                    style={{
-                      boxShadow: '0 0 50px rgba(234, 179, 8, 0.9), 0 0 100px rgba(220, 38, 38, 0.7), 0 0 150px rgba(234, 179, 8, 0.5), inset 0 0 30px rgba(255, 255, 255, 0.2)',
-                      animation: 'pulse 2s infinite'
-                    }}
+                    className="relative balboa-accent-gradient text-black font-semibold py-8 px-16 text-xl rounded-lg shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-balboa-accent"
                   >
                     <span className="relative z-30 flex items-center space-x-4">
-                      <span className="text-4xl">🥊</span>
-                      <span className="tracking-widest">ENTER THE RING</span>
-                      <span className="text-4xl">🥊</span>
+                      <span className="tracking-wide">START VOICE SETUP</span>
                     </span>
-                    <div 
-                      className="absolute inset-0 opacity-60 z-10"
-                      style={{
-                        background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.3), rgba(234, 179, 8, 0.3), rgba(255, 255, 255, 0.3))',
-                        animation: 'shimmer 2s infinite'
-                      }}
-                    />
                   </Button>
-                  
-                  {/* Glow effect - positioned behind button */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-red-500 opacity-30 blur-xl animate-pulse z-0"></div>
                 </div>
               ) : (
-                // Call Active State - Rocky's Corner Controls
+                // Call Active State - Professional Controls
                 <div className="flex flex-col items-center space-y-8">
                   <div className="text-center mb-6">
-                    <div className="text-4xl font-black text-yellow-400 mb-2 tracking-wider">
-                      🥊 ROUND IN PROGRESS 🥊
+                    <div className="text-3xl font-bold balboa-accent mb-2 tracking-wide">
+                      VOICE SETUP IN PROGRESS
                     </div>
-                    <div className="text-lg font-bold text-white">
-                      Voice verification active - SPEAK YOUR TRUTH!
+                    <div className="text-lg font-medium balboa-text-secondary">
+                      Please speak naturally - we're learning your voice pattern
                     </div>
                   </div>
                   
-                  <div className="flex space-x-8">
-                    {/* Mute Button - Rocky's Corner */}
+                  <div className="flex space-x-6">
+                    {/* Mute Button */}
                     <Button 
                       onClick={toggleMute}
-                      className={`relative font-black py-6 px-10 text-xl rounded-none border-4 shadow-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none ${
+                      className={`relative font-semibold py-4 px-6 text-lg rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 ${
                         isMuted 
-                          ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white border-orange-400' 
-                          : 'bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white border-gray-500'
+                          ? 'bg-red-600 border-red-500 hover:bg-red-700 focus:ring-red-500' 
+                          : 'balboa-surface-elevated border balboa-border balboa-text-primary hover:balboa-text-primary focus:ring-balboa-accent'
                       }`}
-                      style={{
-                        boxShadow: isMuted 
-                          ? '0 0 30px rgba(234, 88, 12, 0.8), 0 0 60px rgba(234, 88, 12, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3)'
-                          : '0 0 30px rgba(75, 85, 99, 0.8), 0 0 60px rgba(75, 85, 99, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3)'
-                      }}
                     >
-                      <span className="relative z-10 flex items-center space-x-3">
-                        <span className="text-2xl">
-                          {isMuted ? '🔊' : '🔇'}
-                        </span>
-                        <span className="tracking-wider">
-                          {isMuted ? 'UNMUTE' : 'MUTE'}
-                        </span>
+                      <span className="relative z-10 flex items-center justify-center">
+                        <svg 
+                          className={`w-6 h-6 ${isMuted ? 'text-white' : 'balboa-accent'}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          {isMuted ? (
+                            // Muted microphone icon with slash
+                            <g>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 6l12 12" />
+                            </g>
+                          ) : (
+                            // Active microphone icon
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                          )}
+                        </svg>
                       </span>
                     </Button>
 
-                    {/* End Call Button - Rocky's Exit */}
+                    {/* End Call Button */}
                     <Button 
                       onClick={endElevenLabsCall}
-                      className="relative bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-black py-6 px-10 text-xl rounded-none border-4 border-red-400 shadow-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none"
-                      style={{
-                        boxShadow: '0 0 30px rgba(220, 38, 38, 0.8), 0 0 60px rgba(220, 38, 38, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3)'
-                      }}
+                      className="relative balboa-surface-elevated border balboa-border balboa-text-primary hover:balboa-text-primary font-semibold py-4 px-8 text-lg rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-balboa-accent"
                     >
                       <span className="relative z-10 flex items-center space-x-3">
-                        <span className="text-2xl">🏁</span>
-                        <span className="tracking-wider">END FIGHT</span>
+                        <span className="tracking-wide">END VERIFICATION</span>
                       </span>
                     </Button>
                   </div>
                 </div>
               )}
               
-              {/* Call Status - Rocky Style */}
+              {/* Call Status - Friendly Style */}
               {status === 'connecting' && (
                 <div className="text-center mt-8">
-                  <div className="inline-block bg-gradient-to-r from-red-800 to-red-900 border-2 border-yellow-400 px-6 py-3">
-                    <p className="text-lg font-bold text-yellow-400 tracking-wider">
-                      🔗 ESTABLISHING CONNECTION...
+                  <div className="inline-block balboa-surface-elevated border balboa-border px-6 py-3">
+                    <p className="text-lg font-semibold balboa-accent tracking-wide">
+                      CONNECTING TO VOICE SERVICE...
                     </p>
                   </div>
                 </div>
               )}
               
-              {isCallActive && (
-                <div className="text-center mt-8">
-                  <div className="inline-block bg-gradient-to-r from-green-800 to-green-900 border-2 border-green-400 px-8 py-4">
-                    <p className="text-xl font-black text-green-400 tracking-wider mb-2">
-                      🥊 FIGHT IS ON! 🥊
-                    </p>
-                    <p className="text-lg font-bold text-white">
-                      Voice verification active - SPEAK YOUR TRUTH!
-                    </p>
-                    {isSpeaking && (
-                      <p className="text-lg font-bold text-blue-400 mt-2 tracking-wider">
-                        🎙️ OPPONENT IS SPEAKING...
-                      </p>
-                    )}
-                    {isMuted && (
-                      <p className="text-lg font-bold text-orange-400 mt-2 tracking-wider">
-                        🔇 YOU ARE SILENCED
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
 
-              {/* Verification Result - Victory Display */}
+              {/* Verification Result - Simple Completion */}
               {result && (
                 <div className="mt-12">
-                  <div className="bg-gradient-to-r from-yellow-600 to-yellow-800 border-4 border-yellow-400 p-8 text-center">
-                    <div className="text-6xl mb-4 animate-victory-bounce">🏆</div>
-                    <h3 className="text-4xl font-black text-black mb-4 tracking-wider">
-                      VICTORY ACHIEVED!
+                  <div className="balboa-surface-elevated border balboa-border p-8 text-center shadow-xl">
+                    <div className="w-16 h-16 balboa-success rounded-full flex items-center justify-center mx-auto mb-4 animate-success-glow">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-3xl font-bold balboa-text-primary mb-4 tracking-wide">
+                      VOICE SETUP COMPLETE
                     </h3>
-                    <div className="bg-black bg-opacity-50 p-6 text-left">
-                      <div className="text-lg text-yellow-300 space-y-2">
-                        <p><span className="font-bold text-yellow-400">FIGHT ID:</span> {result.callId}</p>
-                        <p><span className="font-bold text-yellow-400">ROUND DURATION:</span> {result.duration}s</p>
-                        {result.transcript && (
-                          <p><span className="font-bold text-yellow-400">YOUR WORDS:</span> {result.transcript}</p>
-                        )}
-                        {result.summary && (
-                          <p><span className="font-bold text-yellow-400">FIGHT SUMMARY:</span> {result.summary}</p>
-                        )}
+                    <div className="balboa-surface p-6 text-center border balboa-border">
+                      <div className="text-lg balboa-text-secondary">
+                        <p className="font-semibold balboa-text-primary mb-2">Great job!</p>
+                        <p>Your voice verification has been successfully set up. You can now proceed to your dashboard.</p>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Error Display - Defeat Screen */}
+              {/* Error Display - Friendly Error Screen */}
               {error && (
                 <div className="mt-12">
-                  <div className="bg-gradient-to-r from-red-600 to-red-800 border-4 border-red-400 p-8 text-center">
-                    <div className="text-6xl mb-4">💥</div>
-                    <h3 className="text-4xl font-black text-white mb-4 tracking-wider">
-                      FIGHT INTERRUPTED!
+                  <div className="balboa-surface-elevated border balboa-border p-8 text-center shadow-xl">
+                    <div className="w-16 h-16 balboa-danger rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-3xl font-bold balboa-text-primary mb-4 tracking-wide">
+                      SETUP INTERRUPTED
                     </h3>
-                    <div className="bg-black bg-opacity-50 p-6">
-                      <p className="text-lg text-red-200 font-bold">
-                        {error.message}
+                    <div className="balboa-surface p-6 border balboa-border">
+                      <p className="text-lg balboa-text-secondary font-semibold mb-2">
+                        Something went wrong during voice setup.
+                      </p>
+                      <p className="text-base balboa-text-muted">
+                        Please try again or contact support if the issue persists.
                       </p>
                     </div>
                   </div>
