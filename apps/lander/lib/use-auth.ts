@@ -8,12 +8,14 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  isOnboarded: boolean;
 }
 
 export interface AuthState {
   user: AuthUser | null;
   loading: boolean;
   isAuthenticated: boolean;
+  signOut: () => Promise<void>;
 }
 
 export function useAuth(): AuthState {

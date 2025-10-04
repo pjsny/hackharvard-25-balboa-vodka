@@ -122,35 +122,32 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
     // Clear the OTP from Redis
     await redis.del(`otp:${email}`);
 
-    // Create or update user in database
-    let user;
-    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    
-    if (existingUser.length === 0) {
-      // Create new user
-      const newUser = await db.insert(users).values({
-        email,
-        name: email.split("@")[0],
-      }).returning();
-      user = newUser[0];
-    } else {
-      // Update existing user
-      const updatedUser = await db.update(users)
-        .set({ 
-          updatedAt: new Date()
-        })
-        .where(eq(users.email, email))
-        .returning();
-      user = updatedUser[0];
+    // Upsert user in database (insert or update)
+    const [user] = await db.insert(users).values({
+      email,
+      name: email.split("@")[0],
+    }).onConflictDoUpdate({
+      target: users.email,
+      set: {
+        updatedAt: new Date(),
+      }
+    }).returning();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Failed to create user",
+        error: "USER_CREATION_FAILED"
+      };
     }
 
     console.log(`OTP verified for ${email}: ${otp}`); // Remove in production
     
     // Generate JWT token
     const token = generateToken({
-      userId: user!.id,
-      email: user!.email,
-      name: user!.name || email.split("@")[0]
+      userId: user.id,
+      email: user.email,
+      name: user.name || email.split("@")[0]
     });
     
     // Set token in cookies
@@ -161,9 +158,9 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
       message: "Email verified successfully",
       token: token,
       user: {
-        id: user!.id,
-        email: user!.email,
-        name: user!.name || email.split("@")[0]
+        id: user.id,
+        email: user.email,
+        name: user.name || email.split("@")[0]
       }
     };
   } catch (error) {

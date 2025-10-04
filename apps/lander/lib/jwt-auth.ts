@@ -17,6 +17,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  isOnboarded: boolean;
 }
 
 /**
@@ -67,6 +68,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       id: userData.id,
       email: userData.email,
       name: userData.name || undefined,
+      isOnboarded: userData.isOnboarded,
     };
   } catch (error) {
     console.error('Error getting current user:', error);
