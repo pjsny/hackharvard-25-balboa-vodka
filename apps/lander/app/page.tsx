@@ -2,14 +2,45 @@
 
 import { Button } from "~/components/ui/button";
 import { sendOTP, verifyOTP } from "~/lib/auth-actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "~/lib/use-auth";
 
 export default function BalboaApp() {
+  const { user, loading, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showOTPInput, setShowOTPInput] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+
+  // Redirect to dashboard if user is already logged in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, user, router]);
+
+  // Show loading while checking authentication status
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold">Loading...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,13 +132,21 @@ export default function BalboaApp() {
   const handleVerifyCode = async () => {
     console.log("Verifying code...");
     console.log(email, otp.join(''));
-    const result = await verifyOTP(email, otp.join(''));
-    console.log(result);
-    if (result.success) {
-      setShowOTPInput(false);
-      setMessage(result.message);
-    } else {
-      setMessage(result.message || "Failed to verify code");
+    
+    try {
+      const result = await verifyOTP(email, otp.join(''));
+      console.log("Verify result:", result);
+      
+      if (result.success) {
+        setMessage("Email verified successfully! Redirecting...");
+        // Refresh the page to pick up the new auth cookie
+        router.push("/dashboard");
+      } else {
+        setMessage(result.message || "Invalid or expired verification code");
+      }
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      setMessage("Failed to verify code");
     }
   };
 

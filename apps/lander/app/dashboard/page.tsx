@@ -5,15 +5,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Badge } from "~/components/ui/badge";
 import { Trophy, Users, Calendar, Code, Sparkles, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "~/lib/use-auth";
+import { useEffect } from "react";
 
 export default function DashboardScreen() {
+  const { user, loading, isAuthenticated, signOut } = useAuth();
   const router = useRouter();
 
-  const handleSignOut = () => {
-    // TODO: Implement sign out server action
+  // Redirect to login if user is not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/");
+    }
+  }, [loading, isAuthenticated, router]);
+
+  const handleSignOut = async () => {
     console.log("Signing out...");
-    router.push("/");
+    await signOut();
   };
+
+  // Show loading while checking authentication status
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Loading...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if not authenticated (redirect will happen)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">

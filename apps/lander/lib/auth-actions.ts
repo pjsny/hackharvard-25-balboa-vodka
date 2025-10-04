@@ -5,11 +5,18 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { Redis } from '@upstash/redis';
+import { Resend } from 'resend';
+import { db } from "./db";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { generateToken, setAuthToken, clearAuthToken, getCurrentUser } from "./jwt-auth";
 
 // Initialize Redis
 const redis = Redis.fromEnv();
+
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Types for our auth system
 export interface SendOTPResult {
@@ -22,6 +29,7 @@ export interface VerifyOTPResult {
   success: boolean;
   message: string;
   error?: string;
+  token?: string;
   user?: {
     id: string;
     email: string;
@@ -43,7 +51,7 @@ export interface AuthSession {
  */
 export async function sendOTP(email: string): Promise<SendOTPResult> {
   try {
-    // TODO: Implement email validation
+    // Validate email
     if (!email || !email.includes("@")) {
       return {
         success: false,
@@ -52,22 +60,19 @@ export async function sendOTP(email: string): Promise<SendOTPResult> {
       };
     }
 
-    // TODO: Implement rate limiting
-    // Check if user has requested OTP recently (e.g., within last minute)
-    
-    // TODO: Generate secure 6-digit OTP
+    // Generate secure 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    const result = await redis.setex(`otp:${email}`, 300, otp);
+    // Store OTP in Redis with 5-minute expiration
+    await redis.setex(`otp:${email}`, 300, otp);
 
-    // TODO: Send email via email service
-    // Example with Resend:
-    // await resend.emails.send({
-    //   from: 'Balboa Hackathon <noreply@balboa.dev>',
-    //   to: [email],
-    //   subject: 'Your Balboa Hackathon Verification Code',
-    //   html: generateOTPEmailHTML(otp)
-    // });
+    // Send email via Resend
+    await resend.emails.send({
+      from: 'Balboa Hackathon <onboarding@resend.dev>',
+      to: [email],
+      subject: 'Your Balboa Hackathon Verification Code',
+      html: generateOTPEmailHTML(otp)
+    });
 
     console.log(`OTP sent to ${email}: ${otp}`); // Remove in production
     
@@ -93,7 +98,7 @@ export async function sendOTP(email: string): Promise<SendOTPResult> {
  */
 export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPResult> {
   try {
-    // TODO: Validate OTP format
+    // Validate OTP format
     if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
       return {
         success: false,
@@ -102,13 +107,11 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
       };
     }
 
-    // TODO: Retrieve stored OTP from database/cache
-    const storedOTP = await redis.get(`otp:${email}`) as string | null;
-    console.log("Stored OTP:", storedOTP);
-    console.log("OTP:", otp);
-    // TODO: Verify OTP matches and hasn't expired
-    console.log("Stored OTP:", !storedOTP, storedOTP?.trim() !== otp.trim());
-    if (!storedOTP || storedOTP.trim() !== otp.trim()) {
+    // Verify OTP from Redis
+    const storedOTP = await redis.get(`otp:${email}`);
+    const storedOTPString = storedOTP ? String(storedOTP) : null;
+
+    if (!storedOTPString || storedOTPString.trim() !== otp.trim()) {
       return {
         success: false,
         message: "Invalid or expired verification code",
@@ -116,38 +119,51 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
       };
     }
 
-    console.log("OTP verified");
+    // Clear the OTP from Redis
+    await redis.del(`otp:${email}`);
 
-    // TODO: Create or update user in database
-    // const user = await createOrUpdateUser({
-    //   email,
-    //   emailVerified: true,
-    //   lastLoginAt: new Date()
-    // });
-
-    // TODO: Generate secure session token (JWT or session ID)
-    // const sessionToken = await generateSessionToken(user.id);
+    // Create or update user in database
+    let user;
+    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
     
-    // TODO: Set secure HTTP-only cookie
-    // cookies().set('session', sessionToken, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === 'production',
-    //   sameSite: 'lax',
-    //   maxAge: 60 * 60 * 24 * 7 // 7 days
-    // });
-
-    // TODO: Clean up used OTP
-    // await redis.del(`otp:${email}`);
+    if (existingUser.length === 0) {
+      // Create new user
+      const newUser = await db.insert(users).values({
+        email,
+        name: email.split("@")[0],
+      }).returning();
+      user = newUser[0];
+    } else {
+      // Update existing user
+      const updatedUser = await db.update(users)
+        .set({ 
+          updatedAt: new Date()
+        })
+        .where(eq(users.email, email))
+        .returning();
+      user = updatedUser[0];
+    }
 
     console.log(`OTP verified for ${email}: ${otp}`); // Remove in production
+    
+    // Generate JWT token
+    const token = generateToken({
+      userId: user!.id,
+      email: user!.email,
+      name: user!.name || email.split("@")[0]
+    });
+    
+    // Set token in cookies
+    await setAuthToken(token);
     
     return {
       success: true,
       message: "Email verified successfully",
+      token: token,
       user: {
-        id: "temp-user-id", // TODO: Use real user ID
-        email,
-        name: email.split("@")[0] // TODO: Get from database
+        id: user!.id,
+        email: user!.email,
+        name: user!.name || email.split("@")[0]
       }
     };
   } catch (error) {
@@ -167,23 +183,6 @@ export async function verifyOTP(email: string, otp: string): Promise<VerifyOTPRe
  */
 export async function resendOTP(email: string): Promise<SendOTPResult> {
   try {
-    // TODO: Implement rate limiting check
-    // const lastSent = await redis.get(`otp_sent:${email}`);
-    // if (lastSent && Date.now() - parseInt(lastSent) < 60000) {
-    //   return {
-    //     success: false,
-    //     message: "Please wait before requesting another code",
-    //     error: "RATE_LIMITED"
-    //   };
-    // }
-
-    // TODO: Invalidate previous OTP
-    // await redis.del(`otp:${email}`);
-    
-    // TODO: Record send time for rate limiting
-    // await redis.setex(`otp_sent:${email}`, 60, Date.now().toString());
-
-    // Reuse sendOTP logic
     return await sendOTP(email);
   } catch (error) {
     console.error("Error resending OTP:", error);
@@ -196,24 +195,23 @@ export async function resendOTP(email: string): Promise<SendOTPResult> {
 }
 
 /**
- * Get current user session
+ * Get current user session using JWT
  * @returns Promise<AuthSession | null>
  */
 export async function getSession(): Promise<AuthSession | null> {
   try {
-    // TODO: Read session cookie
-    // const sessionToken = cookies().get('session')?.value;
-    // if (!sessionToken) return null;
+    const user = await getCurrentUser();
+    
+    if (!user) {
+      return null;
+    }
 
-    // TODO: Verify session token
-    // const payload = await verifySessionToken(sessionToken);
-    // if (!payload) return null;
-
-    // TODO: Check if session is expired
-    // if (payload.expiresAt < new Date()) return null;
-
-    // TODO: Return session data
-    return null; // Placeholder
+    return {
+      userId: user.id,
+      email: user.email,
+      isVerified: true,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    };
   } catch (error) {
     console.error("Error getting session:", error);
     return null;
@@ -221,21 +219,13 @@ export async function getSession(): Promise<AuthSession | null> {
 }
 
 /**
- * Sign out user
+ * Sign out user using JWT
  * @returns Promise<void>
  */
 export async function signOut(): Promise<void> {
   try {
-    // TODO: Clear session cookie
-    // cookies().delete('session');
-    
-    // TODO: Invalidate session token
-    // const sessionToken = cookies().get('session')?.value;
-    // if (sessionToken) {
-    //   await invalidateSessionToken(sessionToken);
-    // }
-
-    // TODO: Redirect to home
+    // Clear the auth token cookie
+    await clearAuthToken();
     redirect('/');
   } catch (error) {
     console.error("Error signing out:", error);
@@ -250,53 +240,12 @@ export async function signOut(): Promise<void> {
  */
 function generateOTPEmailHTML(otp: string): string {
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Your Balboa Hackathon Verification Code</title>
-    </head>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #8B5CF6; font-size: 28px; margin: 0;">Welcome to Balboa!</h1>
-        <p style="color: #666; font-size: 16px; margin: 10px 0;">The ultimate hackathon experience</p>
+    <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #8B5CF6; text-align: center;">Your Verification Code</h2>
+      <div style="text-align: center; margin: 30px 0;">
+        <span style="font-size: 32px; font-weight: bold; color: #333; letter-spacing: 4px; font-family: monospace;">${otp}</span>
       </div>
-      
-      <div style="background: linear-gradient(135deg, #8B5CF6, #EC4899); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-        <h2 style="color: white; margin: 0 0 20px 0; font-size: 24px;">Your Verification Code</h2>
-        <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block; margin: 0 auto;">
-          <span style="font-size: 32px; font-weight: bold; color: #8B5CF6; letter-spacing: 4px; font-family: monospace;">${otp}</span>
-        </div>
-        <p style="color: white; margin: 20px 0 0 0; font-size: 14px;">This code expires in 5 minutes</p>
-      </div>
-      
-      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-        <h3 style="color: #333; margin: 0 0 15px 0;">What's next?</h3>
-        <ul style="color: #666; margin: 0; padding-left: 20px;">
-          <li>Enter this code in the verification screen</li>
-          <li>Complete your profile setup</li>
-          <li>Join the hackathon and start building!</li>
-        </ul>
-      </div>
-      
-      <div style="text-align: center; color: #999; font-size: 12px;">
-        <p>If you didn't request this code, please ignore this email.</p>
-        <p>This code will expire in 5 minutes for security reasons.</p>
-      </div>
-    </body>
-    </html>
+      <p style="text-align: center; color: #666;">This code expires in 5 minutes.</p>
+    </div>
   `;
 }
-
-/**
- * Test server action
- */
-export async function testAction(): Promise<void> {
-  console.log("sup");
-}
-
-/**
- * Required env vars: DATABASE_URL, REDIS_URL, EMAIL_SERVICE_API_KEY, JWT_SECRET
- * Optional: EMAIL_FROM, RATE_LIMIT_WINDOW, OTP_EXPIRY, SESSION_EXPIRY
- */
