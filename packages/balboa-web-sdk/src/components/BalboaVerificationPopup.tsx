@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dial
 import { Mic, Check, X, Shield, Volume } from "lucide-react";
 import { styled } from "../styles/stitches.config";
 import { useElevenLabsVerification } from "../elevenlabs-hook";
+import { SessionConfig } from '@elevenlabs/react';
 
 // Stitches styled components
 const VerificationContainer = styled('div', {
@@ -445,18 +446,18 @@ export const BalboaVerificationPopup = ({
         agentId: elevenLabsConfig.agentId,
         connectionType: 'websocket' as const,
         userId: sessionId,
-        conversationConfigOverride: {
-          agent: {
-            firstMessage: firstMessage
-          }
-        },
         // Inject dynamic variables into the conversation
         // These variables are accessible in the agent's prompt using {{variable_name}}
         dynamicVariables: {
           user_email: email || '',
           verification_question: question || 'Please verify your identity',
+        },
+        overrides: {
+          agent: {
+            firstMessage
+          }
         }
-      };
+      } as SessionConfig;
 
       console.log('🚀 Starting verification with config override:', {
         email: email || '',

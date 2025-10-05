@@ -6,7 +6,8 @@
 		"dev": "next dev --port 3000",
 		"build": "next build",
 		"start": "next start",
-		"lint": "eslint . --max-warnings 0"
+		"lint": "eslint . --max-warnings 0",
+    "studio": "drizzle-kit studio"
 	},
 	"dependencies": {
 		"@ai-sdk/google": "^2.0.17",

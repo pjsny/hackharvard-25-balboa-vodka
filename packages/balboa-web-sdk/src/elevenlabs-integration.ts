@@ -58,7 +58,7 @@ export class BalboaElevenLabsIntegration {
 				const disconnectHandler = () => {
 					duration = Math.floor((Date.now() - startTime) / 1000);
 					this.isActive = false;
-					
+
 					resolve({
 						callId: conversationId,
 						recording: '', // ElevenLabs doesn't provide direct recording access
