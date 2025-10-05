@@ -52,7 +52,7 @@ The endpoint uses **Gemini Flash** to semantically verify the answer:
 
 ```typescript
 const { text } = await generateText({
-  model: google("gemini-1.5-flash"),
+  model: google("gemini-2.5-flash"),
   prompt: `You are verifying if a user's answer to a security question is correct.
 
 Question: "What is your date of birth?"

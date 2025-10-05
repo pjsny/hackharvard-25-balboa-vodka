@@ -121,7 +121,7 @@ Agent asks question and captures user's spoken answer.
 ```typescript
 // API call to /api/verify-answer
 const result = await generateText({
-  model: google("gemini-1.5-flash"),
+  model: google("gemini-2.5-flash"),
   prompt: `
     Question: "What city were you born in?"
     User's Answer: "San Francisco"
@@ -298,7 +298,7 @@ CREATE TABLE verifications (
 GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key
 
 # Optional: Configure LLM model
-VERIFICATION_LLM_MODEL=gemini-1.5-flash
+VERIFICATION_LLM_MODEL=gemini-2.5-flash
 VERIFICATION_LLM_TEMPERATURE=0.1
 VERIFICATION_CONFIDENCE_THRESHOLD=0.7
 ```

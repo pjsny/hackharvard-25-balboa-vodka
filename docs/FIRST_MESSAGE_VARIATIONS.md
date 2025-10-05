@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
   const { question } = await request.json();
 
   const { text } = await generateText({
-    model: google("gemini-1.5-flash"),
+    model: google("gemini-2.5-flash"),
     prompt: `Generate a natural, professional first message for a voice verification agent.
 
     Context: This is for fraud prevention in e-commerce transactions.

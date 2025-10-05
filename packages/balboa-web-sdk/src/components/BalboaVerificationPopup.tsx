@@ -273,7 +273,24 @@ const ErrorStatusText = styled('p', {
   margin: 0,
 });
 
+const SignupLink = styled('a', {
+  color: '$red500',
+  textDecoration: 'underline',
+  fontWeight: '$bold',
+  cursor: 'pointer',
+
+  '&:hover': {
+    color: '$red600',
+  },
+});
+
 type VerificationState = "idle" | "recording" | "verifying" | "success" | "error";
+
+interface ErrorState {
+  message: string;
+  details?: string;
+  showSignupLink?: boolean;
+}
 
 interface VerificationStep {
   name: string;
@@ -290,6 +307,7 @@ interface BalboaVerificationPopupProps {
   config?: {
     apiKey?: string;
     agentId?: string;
+    baseUrl?: string;
   };
 }
 
@@ -303,6 +321,7 @@ export const BalboaVerificationPopup = ({
   config = {}
 }: BalboaVerificationPopupProps) => {
   const [state, setState] = useState<VerificationState>("idle");
+  const [errorState, setErrorState] = useState<ErrorState | null>(null);
   const [steps, setSteps] = useState<VerificationStep[]>([
     { name: "Answer validation", status: "pending" },
     { name: "Response authenticity check", status: "pending" },
@@ -404,23 +423,39 @@ export const BalboaVerificationPopup = ({
   }, []);
 
   // Generate a varied first message using LLM
-  const generateFirstMessage = async (q?: string): Promise<string> => {
-    if (!q) {
-      return "This transaction seems suspicious. Could you quickly verify your identity?";
+  // Fetches the user's security question from the database and generates a natural first message
+  const generateFirstMessage = async (userEmail: string): Promise<string> => {
+    if (!userEmail) {
+      console.error('❌ No email provided for first message generation');
+      throw new Error('Email is required for verification');
     }
 
     try {
-      // Call API to generate natural first message using Gemini Flash
-      const response = await fetch(`${elevenLabsConfig.baseUrl || process.env.NEXT_PUBLIC_BALBOA_API_URL || 'http://localhost:3000'}/api/generate-first-message`, {
+      // Call API to fetch security question and generate natural first message
+      const baseUrl = config.baseUrl || process.env.NEXT_PUBLIC_BALBOA_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${baseUrl}/api/get-first-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ email: userEmail }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to generate first message: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+
+        // Handle specific error cases
+        if (response.status === 404) {
+          if (errorData.error?.includes('User not found')) {
+            const error = new Error('USER_NOT_FOUND');
+            (error as any).showSignupLink = true;
+            throw error;
+          } else if (errorData.error?.includes('No security question')) {
+            throw new Error('No security question found. Please configure a security question in your account settings.');
+          }
+        }
+
+        throw new Error(errorData.error || `Failed to generate first message (${response.status})`);
       }
 
       const data = await response.json();
@@ -428,19 +463,22 @@ export const BalboaVerificationPopup = ({
 
       return data.firstMessage;
     } catch (error) {
-      console.error('Error generating first message, using fallback:', error);
-      // Fallback to hardcoded message on error
-      return `This transaction seems suspicious. Could you quickly tell me ${q.toLowerCase()}?`;
+      console.error('❌ Error generating first message:', error);
+      // Re-throw the error so it can be caught by startRecording
+      throw error;
     }
   };
 
   const startRecording = async () => {
     try {
+      // Clear any previous errors
+      setErrorState(null);
       setState("recording");
       const sessionId = `verification_${Date.now()}`;
 
-      // Generate first message with the question using LLM
-      const firstMessage = await generateFirstMessage(question);
+      // Generate first message by fetching user's security question from backend
+      console.log('🔍 Fetching first message for email:', email);
+      const firstMessage = await generateFirstMessage(email);
 
       const sessionOptions = {
         agentId: elevenLabsConfig.agentId,
@@ -449,8 +487,7 @@ export const BalboaVerificationPopup = ({
         // Inject dynamic variables into the conversation
         // These variables are accessible in the agent's prompt using {{variable_name}}
         dynamicVariables: {
-          user_email: email || '',
-          verification_question: question || 'Please verify your identity',
+          user_email: email,
         },
         overrides: {
           agent: {
@@ -459,9 +496,9 @@ export const BalboaVerificationPopup = ({
         }
       } as SessionConfig;
 
-      console.log('🚀 Starting verification with config override:', {
-        email: email || '',
-        question: question || 'Please verify your identity',
+      console.log('🚀 Starting verification session:', {
+        email,
+        sessionId,
         firstMessage,
         sessionId,
         customVariables,
@@ -469,14 +506,24 @@ export const BalboaVerificationPopup = ({
         dynamicVariables: sessionOptions.dynamicVariables
       });
 
-      console.log('📧 User email passed to ElevenLabs:', email || 'NONE');
-      console.log('🔑 Dynamic variables:', sessionOptions.dynamicVariables);
-
-      console.log('📧 User email passed to ElevenLabs:', email || 'NONE');
+      console.log('📧 User email passed to ElevenLabs:', email);
 
       await startVerification(sessionId, sessionOptions, customVariables);
     } catch (error) {
-      console.error("Failed to start ElevenLabs verification:", error);
+      console.error("❌ Failed to start ElevenLabs verification:", error);
+
+      // Set user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start verification';
+      const showSignupLink = error instanceof Error && (error as any).showSignupLink === true;
+
+      setErrorState({
+        message: errorMessage === 'USER_NOT_FOUND'
+          ? 'Please sign up to Balboa to verify this transaction'
+          : errorMessage,
+        details: error instanceof Error ? error.stack : undefined,
+        showSignupLink
+      });
+
       setState("error");
     }
   };
@@ -507,9 +554,7 @@ export const BalboaVerificationPopup = ({
       case "idle":
         return {
           title: "Verification Required",
-          description: question
-            ? `Ready to answer: ${question}`
-            : "Ready to answer your security question",
+          description: "Ready to answer your security question",
           icon: Shield,
           iconClass: "text-foreground",
         };
@@ -536,8 +581,8 @@ export const BalboaVerificationPopup = ({
         };
       case "error":
         return {
-          title: "Access Denied",
-          description: "Answer verification failed",
+          title: "Verification Failed",
+          description: errorState?.message || "An error occurred during verification",
           icon: X,
           iconClass: "text-foreground",
         };
@@ -590,9 +635,7 @@ export const BalboaVerificationPopup = ({
             )}
             {state === "idle" && (
               <Description>
-                {question
-                  ? "The agent will ask you a question - answer with information only you know"
-                  : "Answer the security question to verify your identity"}
+                The agent will ask you a security question - answer with information only you know
               </Description>
             )}
             {state === "recording" && (
@@ -651,7 +694,7 @@ export const BalboaVerificationPopup = ({
               disabled={!elevenLabsConfig.agentId}
             >
               <Mic size={20} style={{ marginRight: '12px' }} />
-              {question ? "Answer Question" : "Start Verification"}
+              Start Verification
             </ActionButton>
           )}
 
@@ -706,11 +749,26 @@ export const BalboaVerificationPopup = ({
             <ErrorContainer>
               <ErrorBar>
                 <ErrorStatusText>
-                  {elevenLabsError?.message || "VERIFICATION FAILED"}
+                  {errorState?.message || elevenLabsError?.message || "VERIFICATION FAILED"}
                 </ErrorStatusText>
               </ErrorBar>
-              <ActionButton onClick={() => setState("idle")}>
-                Try Again
+              {errorState?.showSignupLink && (
+                <Description style={{ marginTop: '16px', textAlign: 'center' }}>
+                  Sign up at{' '}
+                  <SignupLink
+                    href="https://balboa.vodka"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    balboa.vodka
+                  </SignupLink>
+                </Description>
+              )}
+              <ActionButton onClick={() => {
+                setErrorState(null);
+                setState("idle");
+              }}>
+                {errorState?.showSignupLink ? 'Close' : 'Try Again'}
               </ActionButton>
             </ErrorContainer>
           )}

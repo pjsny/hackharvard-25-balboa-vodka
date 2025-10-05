@@ -1,6 +1,6 @@
 "use client";
 
-import { VoiceVerificationDialog } from "@balboa/web";
+import { BalboaVerificationPopup } from "@balboa/web";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ export default function Checkout() {
 	const { cart, clearCart } = useCart();
 	const [step, setStep] = useState<"form" | "success">("form");
 	const [checkoutData, setCheckoutData] = useState<CheckoutData>({
-		email: "user@example.com",
+		email: "captika@outlook.com",
 		firstName: "John",
 		lastName: "Doe",
 		address: "123 Main St",
@@ -437,10 +437,10 @@ export default function Checkout() {
 			</div>
 
 			{/* Voice Verification Dialog */}
-			<VoiceVerificationDialog
-				isOpen={showVoiceVerification}
+			<BalboaVerificationPopup
+				open={showVoiceVerification}
 				onClose={handleVoiceVerificationClose}
-				onSuccess={handleVoiceVerificationSuccess}
+				onVerified={handleVoiceVerificationSuccess}
 				email={checkoutData.email}
 				config={{
 					apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY,

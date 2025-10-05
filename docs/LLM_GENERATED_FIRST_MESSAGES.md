@@ -104,7 +104,7 @@ Generate ONLY the message text:
 ### LLM Settings
 
 ```typescript
-model: google("gemini-1.5-flash")
+model: google("gemini-2.5-flash")
 temperature: 0.8  // Higher for natural variety
 maxTokens: 100   // Keep responses concise
 ```
@@ -336,8 +336,8 @@ Cost: $10.50/month → $0.11/month
 **2. Use cheaper model for simple questions**
 ```typescript
 const model = question.length < 30
-  ? google("gemini-1.5-flash-8b")  // Even cheaper!
-  : google("gemini-1.5-flash");
+  ? google("gemini-2.5-flash-8b")  // Even cheaper!
+  : google("gemini-2.5-flash");
 ```
 
 ## Security Considerations

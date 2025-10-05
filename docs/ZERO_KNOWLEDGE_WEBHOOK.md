@@ -82,7 +82,7 @@ POST /api/verify
 ```typescript
 // Backend verifies answer is valid and appropriate
 const { text } = await generateText({
-  model: google("gemini-1.5-flash"),
+  model: google("gemini-2.5-flash"),
   prompt: `You are verifying if a user's answer is valid and appropriate.
 
 User's Answer: "${answer}"
