@@ -17,7 +17,7 @@ export class BalboaElevenLabsIntegration {
 	 * Start a voice verification conversation using ElevenLabs
 	 * Note: This method should be called from within a React component that uses the useConversation hook
 	 */
-	async startVerification(sessionId: string, conversation: any): Promise<ElevenLabsCallResult> {
+	async startVerification(sessionId: string, conversation: any, customVariables?: Record<string, any>): Promise<ElevenLabsCallResult> {
 		try {
 			// Request microphone access
 			await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -26,11 +26,17 @@ export class BalboaElevenLabsIntegration {
 			this.isActive = true;
 
 			// Start the conversation session
-			const conversationId = await this.conversation.startSession({
+			const sessionConfig = {
 				agentId: this.config.agentId || process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID,
 				connectionType: 'webrtc', // Use WebRTC for better audio quality
 				userId: sessionId,
-			});
+				// Include custom variables if provided
+				...(customVariables && {
+					dynamicVariables: customVariables
+				})
+			};
+			
+			const conversationId = await this.conversation.startSession(sessionConfig);
 
 			// Wait for conversation completion
 			return new Promise((resolve, reject) => {

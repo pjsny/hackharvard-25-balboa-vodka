@@ -64,7 +64,13 @@ function CheckoutComponent() {
   const handleVerification = async () => {
     try {
       const result = await verifyWithBalboa({
-        email: 'user@example.com'
+        email: 'user@example.com',
+        customVariables: {
+          transactionId: 'tx_123456',
+          customerId: 'cust_789',
+          riskLevel: 'high',
+          orderAmount: 99.99
+        }
       })
 
       if (result.success && result.verified) {
@@ -100,7 +106,13 @@ function CustomVerification() {
         console.log('Verification completed!')
         setIsOpen(false)
       }}
-      secretPhrase="Your custom phrase"
+      email="user@example.com"
+      question="What is your mother's maiden name?"
+      customVariables={{
+        transactionId: "tx_123456",
+        customerId: "cust_789",
+        riskLevel: "high"
+      }}
       config={{
         apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY,
         agentId: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID,
@@ -146,6 +158,7 @@ interface VerificationOptions {
   timeout?: number           // Optional: Custom timeout
   retries?: number           // Optional: Custom retry count
   onProgress?: (status: VerificationStatus) => void  // Optional: Progress callback
+  customVariables?: Record<string, any>  // Optional: Custom variables to pass to verification
 }
 ```
 
@@ -179,7 +192,9 @@ interface BalboaVerificationPopupProps {
   open: boolean              // Whether popup is open
   onClose: () => void       // Called when popup closes
   onVerified: () => void    // Called on successful verification
-  secretPhrase?: string     // Optional: Custom secret phrase
+  email?: string            // Optional: Customer's email address
+  question?: string         // Optional: Custom verification question
+  customVariables?: Record<string, any>  // Optional: Custom variables to pass to verification
   config?: {                // Optional configuration
     apiKey?: string
     agentId?: string
@@ -230,7 +245,7 @@ Low-level hook for ElevenLabs voice conversation integration.
 ```typescript
 interface UseElevenLabsReturn {
   conversation: Conversation | null
-  startVerification: (sessionId: string, options: SessionOptions) => Promise<void>
+  startVerification: (sessionId: string, options: SessionOptions, customVariables?: Record<string, any>) => Promise<void>
   stopVerification: () => Promise<void>
   isActive: boolean
   result: ElevenLabsCallResult | null

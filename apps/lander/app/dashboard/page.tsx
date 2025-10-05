@@ -26,35 +26,35 @@ export default function DashboardScreen(): JSX.Element {
   if (loading) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        {/* Rocky Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-red-900 via-red-800 to-black">
-          {/* Boxing ring ropes effect */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-            <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-            <div className="absolute top-0 right-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-            <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
+        {/* Professional Background */}
+        <div className="absolute inset-0 balboa-gradient">
+          {/* Subtle accent lines */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-balboa-accent to-transparent"></div>
+            <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-transparent via-balboa-accent to-transparent"></div>
+            <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-balboa-accent to-transparent"></div>
+            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-balboa-accent to-transparent"></div>
           </div>
           
-          {/* Corner posts */}
-          <div className="absolute top-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow"></div>
-          <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '0.5s'}}></div>
-          <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1s'}}></div>
-          <div className="absolute bottom-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1.5s'}}></div>
+          {/* Subtle corner accents */}
+          <div className="absolute top-4 left-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow"></div>
+          <div className="absolute top-4 right-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '0.5s'}}></div>
+          <div className="absolute bottom-4 left-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '1s'}}></div>
+          <div className="absolute bottom-4 right-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '1.5s'}}></div>
         </div>
 
         {/* Loading Content */}
         <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
           <div className="text-center">
             <div className="mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 via-red-600 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <span className="text-3xl">🥊</span>
+              <div className="w-16 h-16 balboa-surface-elevated border balboa-border rounded-full flex items-center justify-center mx-auto mb-4 animate-professional-pulse">
+                <div className="w-8 h-8 border-2 border-balboa-accent border-t-transparent rounded-full animate-loading-spinner"></div>
               </div>
-              <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 tracking-wider">
+              <h1 className="text-4xl font-bold balboa-text-primary tracking-wide mb-2">
                 BALBOA
               </h1>
-              <div className="text-xl font-bold text-white mt-2 tracking-widest">
-                PREPARING FOR BATTLE...
+              <div className="text-lg font-medium balboa-text-secondary">
+                Initializing Security Protocol...
               </div>
             </div>
           </div>
@@ -70,21 +70,21 @@ export default function DashboardScreen(): JSX.Element {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Rocky Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-900 via-red-800 to-black">
-        {/* Boxing ring ropes effect */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-          <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-          <div className="absolute top-0 right-0 w-2 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
-          <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 shadow-lg"></div>
+      {/* Professional Background */}
+      <div className="absolute inset-0 balboa-gradient">
+        {/* Subtle accent lines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-balboa-accent to-transparent"></div>
+          <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-transparent via-balboa-accent to-transparent"></div>
+          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-balboa-accent to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-balboa-accent to-transparent"></div>
         </div>
         
-        {/* Corner posts */}
-        <div className="absolute top-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow"></div>
-        <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '0.5s'}}></div>
-        <div className="absolute bottom-4 left-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-4 right-4 w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl animate-corner-post-glow" style={{animationDelay: '1.5s'}}></div>
+        {/* Subtle corner accents */}
+        <div className="absolute top-4 left-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow"></div>
+        <div className="absolute top-4 right-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '0.5s'}}></div>
+        <div className="absolute bottom-4 left-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-4 right-4 w-2 h-2 balboa-accent rounded-full opacity-60 animate-subtle-glow" style={{animationDelay: '1.5s'}}></div>
       </div>
 
       {/* Main content */}
@@ -92,45 +92,42 @@ export default function DashboardScreen(): JSX.Element {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex justify-between items-center mb-12">
-            <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 tracking-wider">
+            <h1 className="text-6xl font-bold balboa-text-primary tracking-wide">
               BALBOA
             </h1>
             
             <Button 
               onClick={handleSignOut}
-              className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-black py-4 px-8 text-lg rounded-none border-4 border-red-400 shadow-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none"
-              style={{
-                boxShadow: '0 0 20px rgba(220, 38, 38, 0.8), 0 0 40px rgba(220, 38, 38, 0.6), inset 0 0 10px rgba(0, 0, 0, 0.3)'
-              }}
+              className="balboa-surface-elevated border balboa-border balboa-text-primary hover:balboa-text-primary font-semibold py-3 px-6 text-sm rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-balboa-accent"
             >
-              <LogOut className="w-5 h-5 mr-3" />
-              <span className="tracking-wider">EXIT RING</span>
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="tracking-wide">SIGN OUT</span>
             </Button>
           </div>
 
-          {/* Victory Section */}
-          <div className="bg-gradient-to-r from-yellow-600 to-yellow-800 border-4 border-yellow-400 p-12 text-center">
-            <div className="text-8xl mb-6 animate-victory-bounce">🏆</div>
-            <h2 className="text-6xl font-black text-black mb-4 tracking-wider">
-              VICTORY ACHIEVED!
+          {/* Success Section */}
+          <div className="balboa-surface-elevated border balboa-border p-12 text-center shadow-xl">
+            <div className="text-6xl mb-6 animate-success-glow">✓</div>
+            <h2 className="text-4xl font-bold balboa-text-primary mb-4 tracking-wide">
+              VERIFICATION COMPLETE
             </h2>
-            <div className="text-2xl font-bold text-black mb-6 tracking-widest">
-              🥊 CHAMPION STATUS UNLOCKED 🥊
+            <div className="text-xl font-semibold balboa-accent mb-6 tracking-wide">
+              SECURITY PROTOCOL ACTIVATED
             </div>
-            <div className="bg-black bg-opacity-50 p-8 text-left max-w-3xl mx-auto">
-              <div className="text-xl text-yellow-300 space-y-4">
-                <p className="font-bold text-yellow-400 text-center mb-4">🎯 MISSION ACCOMPLISHED 🎯</p>
+            <div className="balboa-surface p-8 text-left max-w-3xl mx-auto border balboa-border">
+              <div className="text-lg balboa-text-secondary space-y-4">
+                <p className="font-semibold balboa-text-primary text-center mb-4">✓ MISSION ACCOMPLISHED</p>
                 <p className="text-center">
-                  You've successfully entered the ring and proven your worth! 
-                  <span className="text-yellow-400 font-bold"> BALBOA</span> is now your voice-powered guardian.
+                  Your voice verification has been successfully completed. 
+                  <span className="balboa-accent font-semibold"> BALBOA</span> is now your voice-powered security guardian.
                 </p>
                 <p className="text-center">
-                  Your voice is your weapon. Your security is your victory. 
-                  <span className="text-yellow-400 font-bold"> FIGHT ON, CHAMPION!</span>
+                  Your voice is your authentication key. Your security is protected. 
+                  <span className="balboa-accent font-semibold"> SYSTEM SECURED.</span>
                 </p>
-                <p className="text-center text-lg mt-6">
-                  Balboa will automatically work with any of our integrated vendors. 
-                  <span className="text-yellow-400 font-bold"> Check out the Crimson Shop</span> to see it in action!
+                <p className="text-center text-base mt-6">
+                  Balboa will automatically work with integrated vendors. 
+                  <span className="balboa-accent font-semibold"> Check out the example checkout</span> to see it in action!
                 </p>
               </div>
             </div>
