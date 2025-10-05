@@ -28,6 +28,8 @@ export interface VerificationOptions {
 	retries?: number;
 	/** Progress callback for status updates */
 	onProgress?: (status: VerificationStatus) => void;
+	/** Custom variables to pass to the verification session */
+	customVariables?: Record<string, any>;
 }
 
 /**

@@ -76,6 +76,7 @@ export class BalboaClient {
 					transactionId: (options as any).transactionId,
 					customerData: (options as any).customerData,
 					riskLevel: (options as any).riskLevel,
+					customVariables: options.customVariables,
 				}),
 			});
 

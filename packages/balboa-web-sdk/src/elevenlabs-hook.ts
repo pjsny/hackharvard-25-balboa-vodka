@@ -107,11 +107,12 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 	});
 
 	const startVerification = useCallback(
-		async (sessionId: string, sessionOptions?: any): Promise<ElevenLabsCallResult> => {
+		async (sessionId: string, sessionOptions?: any, customVariables?: Record<string, any>): Promise<ElevenLabsCallResult> => {
 			console.log('🚀 Starting ElevenLabs verification...');
 			console.log('📋 Session details:', {
 				sessionId,
 				sessionOptions,
+				customVariables,
 				timestamp: new Date().toISOString()
 			});
 			
@@ -138,10 +139,17 @@ export function useElevenLabsVerification(config: BalboaConfig) {
 					trackSettings: mediaStream.getAudioTracks()[0]?.getSettings()
 				});
 				
-				// Start the conversation session with provided options
+				// Start the conversation session with provided options and custom variables
 				const sessionConfig = {
 					...sessionOptions,
 					userId: sessionId,
+					// Merge custom variables into dynamicVariables if they exist
+					...(customVariables && {
+						dynamicVariables: {
+							...sessionOptions?.dynamicVariables,
+							...customVariables
+						}
+					})
 				};
 				
 				console.log('🎯 Starting conversation session with config:', sessionConfig);

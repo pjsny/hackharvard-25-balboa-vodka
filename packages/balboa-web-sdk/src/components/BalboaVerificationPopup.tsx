@@ -285,6 +285,7 @@ interface BalboaVerificationPopupProps {
   onVerified: () => void;
   email?: string;
   question?: string;
+  customVariables?: Record<string, any>;
   config?: {
     apiKey?: string;
     agentId?: string;
@@ -297,6 +298,7 @@ export const BalboaVerificationPopup = ({
   onVerified,
   email,
   question,
+  customVariables,
   config = {}
 }: BalboaVerificationPopupProps) => {
   const [state, setState] = useState<VerificationState>("idle");
@@ -459,10 +461,11 @@ export const BalboaVerificationPopup = ({
         email: email || '',
         question: question || 'Please verify your identity',
         firstMessage,
-        sessionId
+        sessionId,
+        customVariables
       });
 
-      await startVerification(sessionId, sessionOptions);
+      await startVerification(sessionId, sessionOptions, customVariables);
     } catch (error) {
       console.error("Failed to start ElevenLabs verification:", error);
       setState("error");

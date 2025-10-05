@@ -4,10 +4,12 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { useElevenLabsVerification } from "@balboa/web";
+import { useAuth } from "~/lib/use-auth";
 
 export default function OnboardingPage(): JSX.Element {
   const [isMuted, setIsMuted] = useState(false);
-  
+  const { user } = useAuth();
+
   // ElevenLabs configuration
   const config = {
     apiKey: process.env.NEXT_PUBLIC_BALBOA_API_KEY || "",
@@ -43,10 +45,16 @@ export default function OnboardingPage(): JSX.Element {
         userId: sessionId
       };
       
+      // Custom variables for onboarding - only user ID needed
+      const customVariables = {
+        user: user?.id || 'unknown'
+      };
+      
       console.log('🎯 Session options:', sessionOptions);
+      console.log('📊 Custom variables:', customVariables);
       
       // For public agents, we can use agentId directly
-      const result = await startVerification(sessionId, sessionOptions);
+      const result = await startVerification(sessionId, sessionOptions, customVariables);
       console.log('✅ ElevenLabs verification started successfully:', result);
     } catch (error) {
       console.error('🚨 Failed to start ElevenLabs call:', error);
